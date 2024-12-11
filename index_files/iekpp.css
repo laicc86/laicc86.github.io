@@ -38,11 +38,11 @@ header {
   font-family: Roboto, 'Noto Sans TC', sans-serif;
   line-height: 1.75;
   width: 150px;
-  color: #50b3a6;
+  color: rgb(237, 119, 79);
   background: #fff;
   border-radius: 2.25rem;
   margin: 0 .8rem 0 0;
-  border: 2px solid #50b3a6;
+  border: 2px solid rgb(237, 119, 79);
   text-align: center;
   text-decoration: none;
   letter-spacing: 1px;
@@ -280,7 +280,7 @@ header {
   display: block;
   margin: 1.5rem auto;
   width: 250px;
-  background: linear-gradient(0deg, rgb(24,156,178) 0%, rgb(80,179,166) 100%);
+  background: linear-gradient(56deg, rgb(238, 110, 68) 0%, rgb(239, 163, 137) 100%);
   border: 2px solid #fff;
   text-align: center;
   text-decoration: none;

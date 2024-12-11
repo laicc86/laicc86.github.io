@@ -127,7 +127,7 @@ button {
   right: 15px;
   top: 60%;
   width: 120px; height: 120px;
-  background: linear-gradient(0deg, rgb(24,156,178) 0%, rgb(80,179,166) 100%);
+  background: linear-gradient(56deg, rgb(237, 119, 79) 0%, rgb(239, 163, 137) 100%);
   border: 8px solid #fff;
   text-align: center;
   text-decoration: none;
@@ -517,7 +517,7 @@ h3.sec-title.green {
 .about {
   position: relative;
   z-index: 2;
-  background: linear-gradient(56deg, rgb(43, 158, 139) 0%, rgb(2, 137, 195) 100%);
+  background: linear-gradient(56deg, rgb(169, 199, 207) 0%, rgb(77, 150, 165) 100%);
   -webkit-transform: skewy(1.75deg);
           transform: skewy(1.75deg);
   padding-top: 80px;
@@ -545,7 +545,7 @@ h3.sec-title.green {
 .requirement {
   position: relative;
   z-index: 2;
-  background: linear-gradient(56deg, rgb(247, 197, 157) 0%, rgb(247, 121, 71) 100%);
+  background: linear-gradient(56deg, rgb(238, 198, 165) 0%, rgb(233, 173, 160) 100%);
   -webkit-transform: skewy(1.75deg);
           transform: skewy(1.75deg);
   padding-top: 80px;
@@ -765,7 +765,7 @@ h3.sec-title.green {
   margin-top: -64px;
   position: relative;
   z-index: 3;
-  background: linear-gradient(56deg, rgb(43, 158, 139) 0%, rgb(2, 137, 195) 100%);
+  background: linear-gradient(56deg, rgb(239, 163, 137) 0%, rgb(237, 119, 79) 100%);
   -webkit-transform: skewy(-1.75deg);
           transform: skewy(-1.75deg);
   padding-top: 80px;
