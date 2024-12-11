@@ -1,199 +1,505 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的古董收藏品</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-        }
-        .antique-item {
-            border: 1px solid #ddd;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-        .antique-item h2 {
-            color: #2980b9;
-        }
-        .antique-description {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            margin-top: 20px;
-        }
-        .antique-images {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .image-container {
-            width: 200px;
-            height: 200px;
-            position: relative;
-            overflow: hidden;
-            border-radius: 5px;
-        }
-        .image-container img {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            cursor: pointer;
-            transition: opacity 0.3s;
-        }
-        .image-container img:hover {
-            opacity: 0.8;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            padding-top: 50px;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.9);
-        }
-        .modal-content {
-            margin: auto;
-            display: block;
-            max-width: 80%;
-            max-height: 80%;
-            object-fit: contain;
-        }
-        .close {
-            position: absolute;
-            top: 15px;
-            right: 35px;
-            color: #f1f1f1;
-            font-size: 40px;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-        .close:hover,
-        .close:focus {
-            color: #bbb;
-            text-decoration: none;
-            cursor: pointer;
-        }
-    </style>
+<!-- saved from url=(0097)file:///D:/job/project/antique_collection/2024%20International%20Youth%20Exchange%20Workshop.html -->
+<html class=" js flexbox flexboxlegacy canvas canvastext webgl no-touch geolocation postmessage no-websqldatabase indexeddb hashchange history draganddrop websockets rgba hsla multiplebgs backgroundsize borderimage borderradius boxshadow textshadow opacity cssanimations csscolumns cssgradients cssreflections csstransforms csstransforms3d csstransitions fontface generatedcontent video audio localstorage sessionstorage webworkers no-applicationcache svg inlinesvg smil svgclippaths js flexbox flexboxlegacy canvas canvastext webgl no-touch geolocation postmessage no-websqldatabase indexeddb hashchange history draganddrop websockets rgba hsla multiplebgs backgroundsize borderimage borderradius boxshadow textshadow opacity cssanimations csscolumns cssgradients cssreflections csstransforms csstransforms3d csstransitions fontface generatedcontent video audio localstorage sessionstorage webworkers no-applicationcache svg inlinesvg smil svgclippaths"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>2024 International Youth Exchange Workshop</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, maximum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="format-detection" content="telephone=no">
+<meta name="title" content="2024 International Youth Exchange Workshop">
+<meta itemprop="name" content="2024 International Youth Exchange Workshop">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="2024 International Youth Exchange Workshop">
+<meta property="og:title" content="2024 International Youth Exchange Workshop">
+<meta name="author" content="2024 International Youth Exchange Workshop">
+<meta itemprop="url" content="https://event.gvm.com.tw/2024_typdworkshop/">
+<meta property="og:url" content="https://event.gvm.com.tw/2024_typdworkshop/">
+<meta name="description" content="This event promotes international exchanges among youth, enhances intercultural communication, and brings international experiences and resources to Taipei. The goal is to foster interaction between foreign friends and Taipei youth, providing channels for policy suggestions, enhancing international perspectives, and encouraging public engagement among participating youth. Through this initiative, the event aims to boost career development and public participation with an international outlook.">
+<meta name="og:description" content="This event promotes international exchanges among youth, enhances intercultural communication, and brings international experiences and resources to Taipei. The goal is to foster interaction between foreign friends and Taipei youth, providing channels for policy suggestions, enhancing international perspectives, and encouraging public engagement among participating youth. Through this initiative, the event aims to boost career development and public participation with an international outlook.">
+<meta property="og:image" content="https://event.gvm.com.tw/2024_typdworkshop/assets/images/fb.jpg">
+<link rel="image_src" href="https://event.gvm.com.tw/2024_typdworkshop/assets/images/fb.jpg">
+<link rel="icon" href="https://www.gvm.com.tw/public/images/favicon.ico" type="image/x-icon">
+<link rel="shortcut icon" sizes="16x16 32x32 48x48 64x64" href="https://www.gvm.com.tw/public/images/favicon.ico">
+<!-- Core CSS -->
+<link rel="stylesheet" href="./index_files/reset.css" type="text/css">
+<link rel="stylesheet" href="./index_files/slick.css" type="text/css">
+<link rel="stylesheet" href="./index_files/slick-theme.css" type="text/css">
+<link rel="stylesheet" href="./index_files/animate.min.css" type="text/css">
+<link rel="stylesheet" href="./index_files/aos.css" type="text/css">
+<link rel="stylesheet" href="./index_files/common.css" type="text/css">
+<link rel="stylesheet" href="./index_files/iekpp.css" type="text/css">
+<link rel="stylesheet" href="./index_files/jquery.fatNav.min.css" type="text/css">
+<link rel="stylesheet" href="./index_files/overlayStyle.css" type="text/css">
+
+<!-- Google Tag Manager -->
+<script type="text/javascript" async="" src="./index_files/cs.js.下載"></script><script type="text/javascript" async="" defer="" src="./index_files/matomo.js.下載"></script><script type="text/javascript" async="" defer="" src="./index_files/matomo.js.下載"></script><script type="text/javascript" defer="" src="./index_files/tracking_post.php"></script><script type="text/javascript" async="" src="./index_files/track.min.js.下載"></script><script type="text/javascript" defer="" src="./index_files/tracking_post.php"></script><script type="text/javascript" async="" defer="" src="./index_files/matomo.js.下載"></script><script type="text/javascript" async="" defer="" src="./index_files/matomo.js.下載"></script><script type="text/javascript" async="" src="./index_files/track.min.js.下載"></script><script src="./index_files/835100663226914" async=""></script><script async="" src="./index_files/fbevents.js.下載"></script><script async="" src="./index_files/gtm.js.下載"></script><script type="text/javascript" async="" src="./index_files/cs(1).js.下載"></script><script type="text/javascript" defer="" src="./index_files/tracking_post(1).php"></script><script type="text/javascript" async="" src="./index_files/saved_resource"></script><script type="text/javascript" async="" src="./index_files/saved_resource(1)"></script><script type="text/javascript" async="" defer="" src="./index_files/matomo(1).js.下載"></script><script type="text/javascript" async="" defer="" src="./index_files/matomo(1).js.下載"></script><script type="text/javascript" async="" src="./index_files/track.min(1).js.下載"></script><script src="./index_files/835100663226914(1)" async=""></script><script async="" src="./index_files/fbevents(1).js.下載"></script><script type="text/javascript" async="" src="./index_files/js"></script><script type="text/javascript" async="" src="./index_files/js(1)"></script><script async="" src="./index_files/gtm(1).js.下載"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src= 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f); })(window,document,'script','dataLayer','GTM-TVNF34V');</script>
+<!-- End Google Tag Manager -->
+
 </head>
-<body>
-    <h1>我的古董收藏品</h1>
-    
-    <div id="antique-container"></div>
+<body data-aos-easing="ease" data-aos-duration="1000" data-aos-delay="0">
+<!-- Google Tag Manager (noscript) -->
+<noscript>
+<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TVNF34V" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
+<!-- End Google Tag Manager (noscript) -->
 
-    <div id="imageModal" class="modal">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <img class="modal-content" id="modalImg">
+<div class="wrapper">
+  <div id="top"></div>
+  <!-- <a href="https://event.gvm.com.tw/2024_typdworkshop/index_eng.html#register" class="fix_cta" id="fixcta">Sign<br>Up</a> -->
+  <a class="btn_signup fix_cta" id="fixcta">Sign<br>Up</a>
+  <!--fat-nav-->
+  <div class="fat-nav">
+    <div class="fat-nav__wrapper">
+      <ul>
+        <li><img src="./index_files/logo-itri50_.png" alt="itri50"></li>
+		    <li><a class="btn_about">About</a></li>
+        <!--<li><a href="#spk">Speaker</a></li>-->
+        <li><a class="btn_timeline">Timeline</a></li>
+        <li><a class="btn_signup">Sign up</a></li>
+      </ul>
     </div>
+  </div>
+  <!--/fat-nav-->
+  <header>
+    <div class="logo_itri50"><a href="https://tpyd.gov.taipei/" target="_blank"><img src="./index_files/logo-itri50.png" alt="itri50"></a></div>
+    <div class="thenav">
+      <ul>
+		    <li><a class="btn_about">About</a></li>
+        <!--<li><a href="#spk">Speaker</a></li>-->
+        <li><a class="btn_timeline">Timeline</a></li>
+        <li><a class="btn_signup">Sign up</a></li>
+      </ul>
+    </div>
+  </header>
+  <div id="kv" class="kv">
+    <div class="pc">
+       <!-- icon-->
+      <div class="kv_icowrap aos-init aos-animate" data-aos="zoom" data-aos-delay="1000">
+	  </div>
+      <img src="./index_files/kv_map.png" data-aos="fade-in-left" alt="" class="aos-init aos-animate"> </div>
+    <div class="mb"> <img src="./index_files/kv_m.jpg" alt=""> <a href="https://event.gvm.com.tw/2024_typdworkshop/index_eng.html#about" class="kv-scroll aos-init aos-animate" data-aos="fade" data-aos-delay="1800"> <img src="./index_files/scroll.png" alt="scroll"> </a> </div>
+  </div>
+  <div class="about" id="about">
+    <div class="about_wrap">
+      <h2 class="sec-title aos-init" data-aos="zoom-out-down">ABOUT</h2>
+      <div class="sec-en aos-init" data-aos="fade-right">About</div>
+      <p> The Department for Youth Taipei City Government , will launch the Youth Overseas Internship Program in 2025. This program will leverage international internship opportunities to connect Taipei's youth with the global market, enhancing their competitiveness and showcasing Taipei's soft power. </p>
+	  <br>
+	  <p> By collaborating with corporations, startups, government agencies, and non-profit organizations, the program offers diverse internship opportunities, enabling young people to gain valuable international experience. <br>
+    </p></div>
+    <div id="particles-js"><canvas class="particles-js-canvas-el" style="width: 100%; height: 100%;" width="1903" height="660"></canvas></div>
+  </div>
+  <!--div class="speaker"  id="spk">
+    <div class="speaker_wrap">
+      <h2 class="sec-title" data-aos="zoom-out-down">講者介紹</h2>
+      <div class="sec-en" data-aos="fade-left">Speaker</div>
+      <div class="spk-slider" data-aos="fade-down" data-aos-delay="400">
+		  <a class="overlay_item" data-box-id="spk01"> <img src="assets/images/spk_01.png" alt="蘇孟宗">
+        <div class="spk-text">
+          <div class="spk-company">工業技術研究院</div>
+          <div class="spk-title"><span>蘇孟宗</span>資深副總暨協理</div>
+        </div>
+        </a>
+        <a class="overlay_item" data-box-id="spk03"> <img src="assets/images/spk_03.png" alt="林昭憲">
+        <div class="spk-text">
+          <div class="spk-company">工研院產業科技國際策略發展所</div>
+          <div class="spk-title"><span>林昭憲</span>所長</div>
+        </div>
+        </a>
+		  <a class="overlay_item" data-box-id="spk04"> <img src="assets/images/spk_04.png" alt="豐田正和">
+        <div class="spk-text">
+          <div class="spk-company">Japan Economic Foundation</div>
+          <div class="spk-title"><span>豐田正和</span>會長</div>
+        </div>
+        </a>
+    </div>
+  </div>-->
+  <div class="agenda" id="agd">
+    <div class="agenda_wrap">
+      <h2 class="sec-title green aos-init" data-aos="zoom-out-down">PROGRAM TIMELINE</h2>
+      <div class="sec-en aos-init" data-aos="fade-right">Program Timeline</div>
+      <div class="agd-cnt">
+	  <!--<h3 class="sec-title green">(This is a tentative schedule and will be subject to the official announcement.)</h3>-->
+	  <h4 class="sec-title">(This is a tentative schedule and will be subject to the official announcement.)</h4>
+        <!--Date+Place-->
+        <!-- <div class="agd_dat_pls aos-init aos-animate" data-aos="zoom-out">
+          <div class="dapl">
+            <div class="dapl_left"><img src="./2024 International Youth Exchange Workshop_files/dat.png" alt="date"></div>
+            <div class="dapl_right">
+              <h3>2024.12.15<span>Sun</span><small>10:00-12:00</small></h3>
+			  </div>
+		  </div>
+          <div class="dapl">
+            <div class="dapl_left"><img src="./2024 International Youth Exchange Workshop_files/plc.png" alt="place"></div>
+            <div class="dapl_right">
+              <h4>International Conference Hall,6F</h4>
+              <h5>Department for Youth,Taipei City Government&nbsp;<a href="https://maps.app.goo.gl/sGywokxYKQ4be7tK8" target="_blank">MAP</a></h5>
+            </div>
+          </div>
+        </div> -->
 
-    <script>
-        // 自動檢測和加載所有古董
-        async function loadAntiques() {
-            const container = document.getElementById('antique-container');
-            try {
-                const response = await fetch('/antiques/index.json');
-                const antiqueList = await response.json();
-                for (const antique of antiqueList) {
-                    await loadAntique(antique, container);
-                }
-            } catch (error) {
-                console.error('Error loading antiques:', error);
-                container.innerHTML = '<p>無法加載古董列表。請確保 index.json 文件存在並且格式正確。</p>';
+        <!--Agenda-->
+		<div class="agd_list">
+          <h4>Jan. 2025</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Program announcement and application guidelines released</h3>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>Feb. 2025</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Online submission of resumes, job research reports, and company-designated portfolios</h3>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>Mar. 2025</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Announcement of the first-round selection results</h3>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>Mar.–April 2025</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Two-day, one-night in-person interview workshop / Announcement of second-round selection results</h3>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>April 2025</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Completion of company interviews and announcement of final admission results</h3>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>May–June 2025</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Participants complete visa, accommodation, and insurance arrangements; pre-departure training conducted</h3>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>June–Sep. 2025</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Overseas summer internship program for participants</h3>
+            </div>
+          </div>
+        </div>					
+        <div class="agd_list">
+          <h4>Nov. 2025</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Return to Taiwan, submission of final reflection reports, and results presentation event</h3>
+            </div>
+          </div>
+		  <!-- <div class="note">＊The Organizer reserves the right to make changes to the agenda</div> -->
+        </div>
+		</div>
+        </div>
+      </div>
+    </div>
+  
+  
+  <!-- <div class="agenda" id="agd">
+    <div class="agenda_wrap">
+      <div class="agd-cnt">
+	  <h3 class="sec-title green">Seeion 2：Living the Smart City Vision in Taipei</h3>
+	  <h4 class="sec-title green">Session 2 was Priority given to students aged 18-30.</h4>
+        <div class="agd_dat_pls aos-init" data-aos="zoom-out">
+          <div class="dapl">
+            <div class="dapl_left"><img src="./2024 International Youth Exchange Workshop_files/dat.png" alt="date"></div>
+            <div class="dapl_right">
+              <h3>2024.12.15<span>Sun</span><small>13:30-16:00</small></h3>
+			  </div>
+		  </div>
+          <div class="dapl">
+            <div class="dapl_left"><img src="./2024 International Youth Exchange Workshop_files/plc.png" alt="place"></div>
+            <div class="dapl_right">
+              <h4>International Conference Hall,6F</h4>
+              <h5>Department for Youth,Taipei City Government&nbsp;<a href="https://maps.app.goo.gl/sGywokxYKQ4be7tK8" target="_blank">MAP</a></h5>
+            </div>
+          </div>
+        </div>
+
+		<div class="agd_list">
+          <h4>13:00 - 13:30</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Registration</h3>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>13:30 - 13:35</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Opening Remarks</h3>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>13:35 - 13:50</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Official Sharing Session</h3>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>13:50 - 14:00</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Group Photo</h3>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>14:00 - 14:15</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>AI Expert Sharing Session</h3>
+			  <h5>Victor Wu<span><br>Founder, Vpon Big Data Group<br>Partner, New Economy Ventures (NEV)</span></h5>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>14:15 - 14:35</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Discussion: Youth in AI Era</h3>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>14:35 - 14:45</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Workshop Introduction</h3>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>14:45 - 15:25</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Group Discussions</h3>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>15:25 - 15:55</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Presentation of Discussion Outcomes</h3>
+            </div>
+          </div>
+        </div>
+        <div class="agd_list">
+          <h4>15:55 - 16:00</h4>
+          <div class="list_right">
+            <div class="list_cnt">
+              <h3>Summary</h3>
+            </div>
+          </div>
+		  <div class="note">＊The Organizer reserves the right to make changes to the agenda</div>
+        </div>
+		</div>
+        </div>
+      </div> -->
+    
+  <div class="requirement" id="requirements">
+    <div class="requirement_wrap">
+      <h2 class="sec-title aos-init" data-aos="zoom-out-down">REQUIREMENTS</h2>
+      <div class="sec-en aos-init" data-aos="fade-right">Requirements</div>
+      <p>- Applicants must be between 18 and 45 years old, with household registration or school enrollment in Taipei City.</p><br>
+      <p>- Applicants must be fluent in the language of the internship location. In terms of English proficiency, applicants should provide an international language proficiency certificate obtained within the past 2 years. Minimum scores required are: TOEFL (ITP) 543, TOEFL (iBT) 72, IELTS 5.5, or TOEIC 785.</p><br>
+      <p>- Host organizations could add other criteria according to potential job positions require.</p><br>
+    </div>
+    <div id="particles-js"><canvas class="particles-js-canvas-el" style="width: 100%; height: 100%;" width="1903" height="742"></canvas></div>
+  </div>
+
+  <div class="register" id="register">
+    <div class="register_wrap">
+      <h2 class="sec-title aos-init" data-aos="zoom-out-down">SIGN UP NOW</h2>
+      <div class="sec-en aos-init" data-aos="fade-left">Sign Up Now</div>
+	  <p text="" align="center"><font color="#fff">Want to be part of the Overseas Internship Program? Join us now!</font></p>
+
+          <!--input class="sign_cta" type="submit" onsubmit="submit()" value="報名"/-->
+          <a href="https://event.gvm.com.tw/2024_typdworkshop/index_eng.html" style="text-decoration:none;"><input class="sign_cta" type="submit" onclick="final()" value="CLOSED"></a>
+        <!--/form-->
+      </div>
+		</div>
+
+
+  <!-- <footer>
+    <p>Copyright © 1999~2023 遠見天下文化出版股份有限公司. All rights reserved.</p>
+  </footer> -->
+
+
+<script src="./index_files/jquery.min.js.下載"></script>
+<script type="text/javascript" src="./index_files/jquery.min(1).js.下載"></script>
+
+<script type="text/javascript" id="" charset="">!function(b,e,f,g,a,c,d){b.fbq||(a=b.fbq=function(){a.callMethod?a.callMethod.apply(a,arguments):a.queue.push(arguments)},b._fbq||(b._fbq=a),a.push=a,a.loaded=!0,a.version="2.0",a.queue=[],c=e.createElement(f),c.async=!0,c.src=g,d=e.getElementsByTagName(f)[0],d.parentNode.insertBefore(c,d))}(window,document,"script","https://connect.facebook.net/en_US/fbevents.js");fbq("init","835100663226914",{external_id:"viqjolbucm9kubp6js3hgc98hd"});fbq("track","PageView");</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=835100663226914&amp;ev=PageView&amp;noscript=1"></noscript>
+<script type="text/javascript" id="" charset="">!function(b,c){b.itg=b.itg||function(){"send"==arguments[0]?(b.itg.q=b.itg.q||[]).push(arguments):(b.itg.q=b.itg.q||[]).unshift(arguments)};a=document.createElement("script");a.type="text/javascript";a.async=1;a.src="https://track.instag.ai/track.min.js";m=document.getElementsByTagName("script")[0];m.parentNode.insertBefore(a,m)}(window);itg("init",{id:"965172829034081"});itg("send");</script>
+<script id="" text="" charset="" type="text/javascript" src="./index_files/tracking_post.js.下載"></script><script type="text/javascript" id="" charset="">function ad_tracking_event(c,d){var a=!1;if("string"==typeof c&&"string"==typeof d&&"function"==typeof ga){a="click";var b={event:"ad_tracking_event"};b.ad_tracking_catagory=c;b.ad_tracking_action=a;b.ad_tracking_label=d;dataLayer.push(b);a=!0}return a};</script>
+
+
+<script type="text/javascript" id="" charset="">var _paq1=window._paq1=window._paq1||[];_paq1.push(["setTrackerUrl","https://matomo.gvm.com.tw/matomo.php"]);_paq1.push(["setSiteId","3"]);_paq1.push(["trackPageView"]);_paq1.push(["enableLinkTracking"]);(function(){var c="https://matomo.gvm.com.tw/",a=document,b=a.createElement("script");a=a.getElementsByTagName("script")[0];b.type="text/javascript";b.async=!0;b.defer=!0;b.src=c+"matomo.js";a.parentNode.insertBefore(b,a)})();var _paq2=window._paq2=window._paq2||[];_paq2.push(["setTrackerUrl","https://matomo.gvm.com.tw/matomo.php"]);
+_paq2.push(["setSiteId","7"]);_paq2.push(["trackPageView"]);_paq2.push(["enableLinkTracking"]);(function(){var c="https://matomo.gvm.com.tw/",a=document,b=a.createElement("script");a=a.getElementsByTagName("script")[0];b.type="text/javascript";b.async=!0;b.defer=!0;b.src=c+"matomo.js";a.parentNode.insertBefore(b,a)})();</script>
+<script type="text/javascript" id="" charset="">document.referrer.includes("cwgv.net")&&(alert("\u60a8\u4f86\u81ea cwgv.net\uff0c\u975e\u9060\u898b\u96dc\u8a8c\u7db2\u7ad9\u7db2\u5740\uff01"),window.location.href="https://www.gvm.com.tw/article/107981");</script><script type="text/javascript" src="./index_files/jquery.fatNav.min.js.下載"></script>
+<script>
+  (function() {
+   $.fatNav();
+   }());
+
+   function submit(){
+    console.log("🚀🚀🚀 ~ file: index.html:503 ~ submit ~ submit:", submit)
+    fb_send('SubmitApplication');
+    // TODO: add submit actions
+  }
+
+  function get_cookies_array() {
+    var cookies = {};
+
+    if (document.cookie && document.cookie != '') {
+      var split = document.cookie.split(';');
+      for (var i = 0; i < split.length; i++) {
+          var name_value = split[i].split("=");
+          name_value[0] = name_value[0].replace(/^ /, '');
+          cookies[decodeURIComponent(name_value[0])] = decodeURIComponent(name_value[1]);
+      }
+    }
+
+  return cookies;
+
+  }
+
+  function getUrlVars() {
+    var vars = [],
+        hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for (var i = 0; i < hashes.length; i++) {
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = decodeURIComponent(hash[1]);
+    }
+    return vars;
+  }
+
+  function fb_send(event_name) {
+    fbq('track', event_name);
+    send_fb_capi({
+        'external_id': get_cookies_array()['user_cookie'],
+        'event_source_url': location.href,
+        "channel": "event",
+        "event_name": event_name,
+        "fbp": get_cookies_array()['_fbp'],
+        "event_id": '2023iektopics_' + get_cookies_array()['user_cookie'],
+    });
+  }
+
+  function send_fb_capi(post_array) {
+    var send_array = {};
+    $.each([
+            'external_id',
+            'event_source_url',
+            'channel',
+            'event_name',
+            'event_id',
+            'fbp',
+            'value',
+            'currency',
+            'contents',
+            'content_type',
+        ],
+        function (index, val) {
+            if (val != undefined && val != '') {
+                send_array[val] = post_array[val];
             }
         }
-
-        // 加載單個古董
-        async function loadAntique(antiqueName, container) {
-            const antiqueItem = document.createElement('div');
-            antiqueItem.className = 'antique-item';
-            container.appendChild(antiqueItem);
-
-            // 添加標題
-            const title = document.createElement('h2');
-            title.textContent = antiqueName;
-            antiqueItem.appendChild(title);
-
-            // 加載圖片
-            const imagesContainer = document.createElement('div');
-            imagesContainer.className = 'antique-images';
-            antiqueItem.appendChild(imagesContainer);
-
-            try {
-                const imgResponse = await fetch(`/antiques/${antiqueName}/images.json`);
-                const images = await imgResponse.json();
-                images.forEach(imageName => {
-                    const imageContainer = document.createElement('div');
-                    imageContainer.className = 'image-container';
-                    
-                    const img = document.createElement('img');
-                    img.src = `/antiques/${antiqueName}/${imageName}`;
-                    img.alt = `${antiqueName} image`;
-                    img.onclick = function() { openModal(this); };
-                    
-                    imageContainer.appendChild(img);
-                    imagesContainer.appendChild(imageContainer);
-
-                    img.onerror = function() {
-                        imageContainer.style.display = 'none';
-                    };
-                });
-            } catch (error) {
-                console.error(`Error loading images for ${antiqueName}:`, error);
-            }
-
-            // 加載描述
-            try {
-                const descResponse = await fetch(`/antiques/${antiqueName}/${antiqueName}.txt`);
-                const description = await descResponse.text();
-                const descriptionElem = document.createElement('p');
-                descriptionElem.className = 'antique-description';
-                descriptionElem.textContent = description;
-                antiqueItem.appendChild(descriptionElem);
-            } catch (error) {
-                console.error(`Error loading description for ${antiqueName}:`, error);
-            }
+    );
+    var get_fbc = getUrlVars()["fbclid"];
+    send_array['fbc'] = (get_fbc === undefined) ? '' : get_fbc;
+    $.ajax({
+        'url': 'https://tracking.gvm.com.tw/tracking_send_fbcapi.php',
+        'type': 'POST',
+        'dataType': "json",
+        'xhrFields': {
+            withCredentials: true
+        },
+        'data': send_array,
+        success: function (data) {
         }
+    });
+  }
 
-        // 打開模態框
-        function openModal(img) {
-            const modal = document.getElementById("imageModal");
-            const modalImg = document.getElementById("modalImg");
-            modal.style.display = "block";
-            modalImg.src = img.src;
-        }
+</script><a href="javascript:void(0)" class="hamburger"><div class="hamburger__icon"></div></a><a href="javascript:void(0)" class="hamburger"><div class="hamburger__icon"></div></a>
+<script>
 
-        // 關閉模態框
-        function closeModal() {
-            document.getElementById("imageModal").style.display = "none";
-        }
+  const btnAbout = document.querySelectorAll('.btn_about');
+  const targetAbout = document.getElementById('about');
+  btnAbout.forEach(button => {
+      button.addEventListener('click', function() {
+        targetAbout.scrollIntoView({ behavior: 'smooth' });
+      });
+  });
+  const btnTimeline = document.querySelectorAll('.btn_timeline');
+  const targetTimeline = document.getElementById('agd');
+  btnTimeline.forEach(button => {
+      button.addEventListener('click', function() {
+        targetTimeline.scrollIntoView({ behavior: 'smooth' });
+      });
+  });
+  const btnRegister = document.querySelectorAll('.btn_signup');
+  const targetRegister = document.getElementById('register');
+  btnRegister.forEach(button => {
+      button.addEventListener('click', function() {
+        targetRegister.scrollIntoView({ behavior: 'smooth' });
+      });
+  });
+</script>
+<script src="file:///D:/job/project/antique_collection/2024%20International%20Youth%20Exchange%20Workshop_files/sign_up.js.%E4%B8%8B%E8%BC%89"></script>
 
-        // 點擊模態框外部時關閉
-        window.onclick = function(event) {
-            if (event.target == document.getElementById("imageModal")) {
-                closeModal();
-            }
-        }
+<script src="./index_files/modernizr.js.下載"></script>
 
-        // 頁面加載時執行
-        window.onload = loadAntiques;
-    </script>
-</body>
-</html>
+<script type="text/javascript" id="" charset="">var anchor,anchor_type,event_data=null;anchor_type="activity_target";
+switch(google_tag_manager["rm"]["34315879"](29)){case "non-subdomain":anchor=google_tag_manager["rm"]["34315879"](30).match("/(.*)/")[1];break;case "subdomain":google_tag_manager["rm"]["34315879"](31)?anchor="csr_"+google_tag_manager["rm"]["34315879"](32).match("/(.*)/")[1]:google_tag_manager["rm"]["34315879"](33)&&-1!=google_tag_manager["rm"]["34315879"](34).indexOf("/university/")?anchor="university_"+google_tag_manager["rm"]["34315879"](35).match("/university/(.*)/")[1]:google_tag_manager["rm"]["34315879"](36)&&-1!=google_tag_manager["rm"]["34315879"](37).indexOf("/graduate/")?anchor="graduate_"+google_tag_manager["rm"]["34315879"](38).match("/graduate/(.*)/")[1]:google_tag_manager["rm"]["34315879"](39)?
+anchor="gvlf_"+google_tag_manager["rm"]["34315879"](40).match("/(.*)/")[1]:google_tag_manager["rm"]["34315879"](41)&&google_tag_manager["rm"]["34315879"](42)?anchor="epaper_enjoylife":google_tag_manager["rm"]["34315879"](43)?anchor_type="epaper_gvm":google_tag_manager["rm"]["34315879"](44)?(anchor_type="activity_path_auto",anchor=""):google_tag_manager["rm"]["34315879"](45)?(anchor_type="activity_path_auto",anchor=""):anchor=google_tag_manager["rm"]["34315879"](46)?google_tag_manager["rm"]["34315879"](47).match("(.*).gvm.com.tw")[1]+"_"+google_tag_manager["rm"]["34315879"](48).match("/(.*)/")[1]:google_tag_manager["rm"]["34315879"](49).match("(.*).gvm.com.tw")[1];break;default:anchor=
+google_tag_manager["rm"]["34315879"](50)};</script>
+<script type="text/javascript" id="" charset="">function check_status_post(b){$.ajax({url:"https://www.gvm.com.tw/newevent/check_event_status/"+b+"/1/Y",type:"get",dataType:"json",data:{},cache:!1,contentType:!1,processData:!1,success:function(a){void 0!=a.cdp_anchor?(event_data=a,tracking_send_page_view_post(a.cdp_anchor)):tracking_send_page_view_post(anchor)},error:function(){tracking_send_page_view_post(anchor)}})};</script>
+<script type="text/javascript" id="" charset="">function get_event_cdp_anchor_post(){"undefined"!=typeof gvm_tracking_event_id?check_status_post(gvm_tracking_event_id):tracking_send_page_view_post(anchor)}function tracking_send_page_view_post(a){gvm_tracking.tracking_anchor_type=anchor_type;gvm_tracking.tracking_anchor=a;gvm_tracking.activity_event_anchor=a;gvm_tracking.tracking_url=encodeURIComponent(location.href);gvm_tracking.tracking_referrer=encodeURIComponent(document.referrer);gvm_tracking.send()}get_event_cdp_anchor_post();</script>
+<script src="./index_files/particles.min.js.下載"></script>
+<script src="./index_files/slick.min.js.下載"></script>
+<script src="./index_files/aos.js.下載"></script>
+<script src="./index_files/common.js.下載"></script>
+<script src="./index_files/overlay.js.下載"></script>
+
+
+
+<script type="text/javascript" id="" charset="">!function(b,e,f,g,a,c,d){b.fbq||(a=b.fbq=function(){a.callMethod?a.callMethod.apply(a,arguments):a.queue.push(arguments)},b._fbq||(b._fbq=a),a.push=a,a.loaded=!0,a.version="2.0",a.queue=[],c=e.createElement(f),c.async=!0,c.src=g,d=e.getElementsByTagName(f)[0],d.parentNode.insertBefore(c,d))}(window,document,"script","https://connect.facebook.net/en_US/fbevents.js");fbq("init","835100663226914",{external_id:"viqjolbucm9kubp6js3hgc98hd"});fbq("track","PageView");</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=835100663226914&amp;ev=PageView&amp;noscript=1"></noscript>
+<script type="text/javascript" id="" charset="">!function(b,c){b.itg=b.itg||function(){"send"==arguments[0]?(b.itg.q=b.itg.q||[]).push(arguments):(b.itg.q=b.itg.q||[]).unshift(arguments)};a=document.createElement("script");a.type="text/javascript";a.async=1;a.src="https://track.instag.ai/track.min.js";m=document.getElementsByTagName("script")[0];m.parentNode.insertBefore(a,m)}(window);itg("init",{id:"965172829034081"});itg("send");</script>
+<script id="" text="" charset="" type="text/javascript" src="./index_files/tracking_post(1).js.下載"></script><script type="text/javascript" id="" charset="">function ad_tracking_event(c,d){var a=!1;if("string"==typeof c&&"string"==typeof d&&"function"==typeof ga){a="click";var b={event:"ad_tracking_event"};b.ad_tracking_catagory=c;b.ad_tracking_action=a;b.ad_tracking_label=d;dataLayer.push(b);a=!0}return a};</script>
+
+
+<script type="text/javascript" id="" charset="">var _paq1=window._paq1=window._paq1||[];_paq1.push(["setTrackerUrl","https://matomo.gvm.com.tw/matomo.php"]);_paq1.push(["setSiteId","3"]);_paq1.push(["trackPageView"]);_paq1.push(["enableLinkTracking"]);(function(){var c="https://matomo.gvm.com.tw/",a=document,b=a.createElement("script");a=a.getElementsByTagName("script")[0];b.type="text/javascript";b.async=!0;b.defer=!0;b.src=c+"matomo.js";a.parentNode.insertBefore(b,a)})();var _paq2=window._paq2=window._paq2||[];_paq2.push(["setTrackerUrl","https://matomo.gvm.com.tw/matomo.php"]);
+_paq2.push(["setSiteId","7"]);_paq2.push(["trackPageView"]);_paq2.push(["enableLinkTracking"]);(function(){var c="https://matomo.gvm.com.tw/",a=document,b=a.createElement("script");a=a.getElementsByTagName("script")[0];b.type="text/javascript";b.async=!0;b.defer=!0;b.src=c+"matomo.js";a.parentNode.insertBefore(b,a)})();</script>
+<script type="text/javascript" id="" charset="">document.referrer.includes("cwgv.net")&&(alert("\u60a8\u4f86\u81ea cwgv.net\uff0c\u975e\u9060\u898b\u96dc\u8a8c\u7db2\u7ad9\u7db2\u5740\uff01"),window.location.href="https://www.gvm.com.tw/article/107981");</script><script type="text/javascript" id="" charset="">if(void 0!==google_tag_manager["rm"]["34315879"](42)){var segments=JSON.parse(google_tag_manager["rm"]["34315879"](43));void 0!==segments.all&&fbq("trackCustom","itg",segments.all,{eventID:segments.event_id})};</script><script type="text/javascript" id="" charset="">window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}if(void 0!==google_tag_manager["rm"]["34315879"](44)){var segments=JSON.parse(google_tag_manager["rm"]["34315879"](45));void 0!==segments.all&&gtag("set","user_properties",segments.all)};</script>
+<script type="text/javascript" id="" charset="">var anchor,anchor_type,event_data=null;anchor_type="activity_target";
+switch(google_tag_manager["rm"]["34315879"](19)){case "non-subdomain":anchor=google_tag_manager["rm"]["34315879"](20).match("/(.*)/")[1];break;case "subdomain":google_tag_manager["rm"]["34315879"](21)?anchor="csr_"+google_tag_manager["rm"]["34315879"](22).match("/(.*)/")[1]:google_tag_manager["rm"]["34315879"](23)&&-1!=google_tag_manager["rm"]["34315879"](24).indexOf("/university/")?anchor="university_"+google_tag_manager["rm"]["34315879"](25).match("/university/(.*)/")[1]:google_tag_manager["rm"]["34315879"](26)&&-1!=google_tag_manager["rm"]["34315879"](27).indexOf("/graduate/")?anchor="graduate_"+google_tag_manager["rm"]["34315879"](28).match("/graduate/(.*)/")[1]:google_tag_manager["rm"]["34315879"](29)?
+anchor="gvlf_"+google_tag_manager["rm"]["34315879"](30).match("/(.*)/")[1]:google_tag_manager["rm"]["34315879"](31)&&google_tag_manager["rm"]["34315879"](32)?anchor="epaper_enjoylife":google_tag_manager["rm"]["34315879"](33)?anchor_type="epaper_gvm":google_tag_manager["rm"]["34315879"](34)?(anchor_type="activity_path_auto",anchor=""):google_tag_manager["rm"]["34315879"](35)?(anchor_type="activity_path_auto",anchor=""):anchor=google_tag_manager["rm"]["34315879"](36)?google_tag_manager["rm"]["34315879"](37).match("(.*).gvm.com.tw")[1]+"_"+google_tag_manager["rm"]["34315879"](38).match("/(.*)/")[1]:google_tag_manager["rm"]["34315879"](39).match("(.*).gvm.com.tw")[1];break;default:anchor=
+google_tag_manager["rm"]["34315879"](40)};</script>
+<script type="text/javascript" id="" charset="">function check_status_post(b){$.ajax({url:"https://www.gvm.com.tw/newevent/check_event_status/"+b+"/1/Y",type:"get",dataType:"json",data:{},cache:!1,contentType:!1,processData:!1,success:function(a){void 0!=a.cdp_anchor?(event_data=a,tracking_send_page_view_post(a.cdp_anchor)):tracking_send_page_view_post(anchor)},error:function(){tracking_send_page_view_post(anchor)}})};</script>
+<script type="text/javascript" id="" charset="">function get_event_cdp_anchor_post(){"undefined"!=typeof gvm_tracking_event_id?check_status_post(gvm_tracking_event_id):tracking_send_page_view_post(anchor)}function tracking_send_page_view_post(a){gvm_tracking.tracking_anchor_type=anchor_type;gvm_tracking.tracking_anchor=a;gvm_tracking.activity_event_anchor=a;gvm_tracking.tracking_url=encodeURIComponent(location.href);gvm_tracking.tracking_referrer=encodeURIComponent(document.referrer);gvm_tracking.send()}get_event_cdp_anchor_post();</script><iframe allow="join-ad-interest-group" data-tagging-id="G-2WBMDEHTBZ" data-load-time="1733829073265" height="0" width="0" src="./index_files/rul.html" style="display: none; visibility: hidden;"></iframe><iframe allow="join-ad-interest-group" data-tagging-id="G-KKZ7H0YQTB" data-load-time="1733829073273" height="0" width="0" src="./index_files/rul(1).html" style="display: none; visibility: hidden;"></iframe>
+<script type="text/javascript" id="" charset="">if(void 0!==google_tag_manager["rm"]["34315879"](52)){var segments=JSON.parse(google_tag_manager["rm"]["34315879"](53));void 0!==segments.all&&fbq("trackCustom","itg",segments.all,{eventID:segments.event_id})};</script><script type="text/javascript" id="" charset="">window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}if(void 0!==google_tag_manager["rm"]["34315879"](54)){var segments=JSON.parse(google_tag_manager["rm"]["34315879"](55));void 0!==segments.all&&gtag("set","user_properties",segments.all)};</script></body></html>
