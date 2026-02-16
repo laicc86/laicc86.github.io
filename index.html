@@ -30,6 +30,14 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #64748b;
     }
+    
+    /* Custom scrollbar for the control panel area */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(71, 85, 105, 0.4);
+    }
   </style>
 <script type="importmap">
 {
@@ -45,5 +53,7 @@
 </head>
 <body>
   <div id="root"></div>
+  <!-- 入口點：必須告訴瀏覽器載入 index.tsx -->
+  <script type="module" src="./index.tsx"></script>
 </body>
 </html>
