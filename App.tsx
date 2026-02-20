@@ -11,7 +11,20 @@ const STORAGE_KEY = 'video_header_gen_v2';
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : INITIAL_STATE;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          ...INITIAL_STATE,
+          timing: parsed.timing || INITIAL_STATE.timing,
+          typography: parsed.typography || INITIAL_STATE.typography,
+          animation: parsed.animation || INITIAL_STATE.animation,
+        };
+      } catch (e) {
+        console.error("Failed to parse saved state", e);
+      }
+    }
+    return INITIAL_STATE;
   });
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -23,10 +36,12 @@ const App: React.FC = () => {
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const stopRequestedRef = useRef(false);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+    const { timing, typography, animation } = state;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ timing, typography, animation }));
+  }, [state.timing, state.typography, state.animation]);
 
   // Detect aspect ratios for media that don't have them
   useEffect(() => {
@@ -107,7 +122,18 @@ const App: React.FC = () => {
         video.crossOrigin = "anonymous";
         video.muted = true;
         video.playsInline = true;
-        video.onloadeddata = () => resolve(video);
+        video.preload = 'auto';
+        
+        const onReady = () => {
+          if (video.duration && !isNaN(video.duration) && video.duration !== Infinity) {
+            video.removeEventListener('loadeddata', onReady);
+            video.removeEventListener('durationchange', onReady);
+            resolve(video);
+          }
+        };
+
+        video.addEventListener('loadeddata', onReady);
+        video.addEventListener('durationchange', onReady);
         video.onerror = () => reject(`Failed to load video: ${url}`);
         video.src = url;
         video.load();
@@ -130,9 +156,13 @@ const App: React.FC = () => {
     setRenderError(null);
     setRecordedUrl(null);
     setIsPlaying(true);
+    stopRequestedRef.current = false;
+
+    let videoEncoder: VideoEncoder | undefined;
+    let mediaElements: (HTMLImageElement | HTMLVideoElement)[] | undefined;
 
     try {
-      const mediaElements = await Promise.all([
+      mediaElements = await Promise.all([
         loadMedia(state.slots.a.url || '', state.slots.a.type),
         loadMedia(state.slots.b.url || '', state.slots.b.type),
         loadMedia(state.slots.c.url || '', state.slots.c.type),
@@ -159,7 +189,7 @@ const App: React.FC = () => {
         }
       });
 
-      const videoEncoder = new VideoEncoder({
+      videoEncoder = new VideoEncoder({
         output: (chunk, metadata) => muxer.addVideoChunk(chunk, metadata),
         error: (e) => {
           console.error('VideoEncoder error:', e);
@@ -191,7 +221,13 @@ const App: React.FC = () => {
 
       const seekVideo = (video: HTMLVideoElement, startTime: number, endTime: number | undefined, elapsed: number) => {
         return new Promise<void>((resolve) => {
-          const effectiveEndTime = endTime || video.duration;
+          let effectiveEndTime = endTime || video.duration;
+          
+          // Fallback if duration is still Infinity (shouldn't happen with new loadMedia but safe to have)
+          if (effectiveEndTime === Infinity || isNaN(effectiveEndTime)) {
+            effectiveEndTime = startTime + 60; // Assume 60s fallback
+          }
+
           const segmentDuration = effectiveEndTime - startTime;
           let targetTime = startTime;
           
@@ -214,6 +250,9 @@ const App: React.FC = () => {
       };
 
       for (let frame = 0; frame <= totalFrames; frame++) {
+        if (stopRequestedRef.current) {
+          throw new Error("Recording stopped by user");
+        }
         const t = frame / FPS; 
         
         if (frame % 5 === 0 || frame === totalFrames) {
@@ -238,9 +277,20 @@ const App: React.FC = () => {
           const kenBurns = 1 + (t / (timing.t1 + timing.t2)) * 0.05;
           ctx.save();
           ctx.globalAlpha = introOpacity;
-          const w = 1920 * kenBurns;
-          const h = 1080 * kenBurns;
-          ctx.drawImage(mediaA as any, (1920 - w) / 2, (1080 - h) / 2, w, h);
+          
+          // Maintain aspect ratio for intro background
+          const mediaAspect = dimsA.w / dimsA.h;
+          const targetAspect = 1920 / 1080;
+          let drawW, drawH;
+          if (mediaAspect > targetAspect) {
+            drawH = 1080 * kenBurns;
+            drawW = drawH * mediaAspect;
+          } else {
+            drawW = 1920 * kenBurns;
+            drawH = drawW / mediaAspect;
+          }
+
+          ctx.drawImage(mediaA as any, (1920 - drawW) / 2, (1080 - drawH) / 2, drawW, drawH);
           ctx.restore();
         }
 
@@ -357,27 +407,39 @@ const App: React.FC = () => {
       setRenderStatus('completed');
       setIsPlaying(false);
 
-      // Cleanup media
-      mediaElements.forEach(el => {
-        if (el instanceof HTMLVideoElement) {
-          el.pause();
-          el.src = "";
-          el.load();
-          el.remove();
-        }
-      });
-
-    } catch (err) {
-      console.error(err);
-      setRenderError("Recording failed. Check your assets and try again.");
-      setRenderStatus('error');
+    } catch (err: any) {
+      if (err.message === "Recording stopped by user") {
+        console.log("Preview stopped by user");
+        setRenderStatus('idle');
+      } else {
+        console.error("Recording error:", err);
+        setRenderError("Recording failed. Check your assets and try again.");
+        setRenderStatus('error');
+      }
       setIsPlaying(false);
+      
+      // Cleanup on error/stop
+      if (typeof videoEncoder !== 'undefined' && videoEncoder.state !== 'closed') {
+        videoEncoder.close();
+      }
+    } finally {
+      // Ensure media cleanup happens regardless of success or failure
+      if (mediaElements) {
+        mediaElements.forEach(el => {
+          if (el instanceof HTMLVideoElement) {
+            el.pause();
+            el.src = "";
+            el.load();
+            el.remove();
+          }
+        });
+      }
     }
   };
 
   const togglePlayback = () => {
     if (isPlaying) {
-      // Logic to stop if needed, but for now we just let it finish
+      stopRequestedRef.current = true;
       return;
     }
     startRecording();
@@ -459,15 +521,14 @@ const App: React.FC = () => {
             </div>
             <button 
               onClick={togglePlayback}
-              disabled={isPlaying}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-bold transition-all shadow-lg border ${
                 isPlaying 
-                ? 'bg-slate-800 border-slate-700 text-slate-500 cursor-wait' 
+                ? 'bg-rose-600 border-rose-500 text-white hover:bg-rose-500 active:scale-95' 
                 : 'bg-blue-600 border-blue-500 text-white hover:bg-blue-500 active:scale-95'
               }`}
             >
-              {isPlaying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-current" />}
-              {isPlaying ? `Recording... ${Math.round(renderProgress)}%` : 'Preview & Record Sequence'}
+              {isPlaying ? <RotateCcw className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current" />}
+              {isPlaying ? `Stop Preview (${Math.round(renderProgress)}%)` : 'Preview & Record Sequence'}
             </button>
           </div>
           <div className="aspect-video w-full bg-[#000000] rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)] border border-slate-800/50 relative flex items-center justify-center">

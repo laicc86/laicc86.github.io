@@ -176,7 +176,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   type="file" 
                   id={`file-${slotId}`} 
                   className="hidden" 
-                  accept="image/*,video/*"
+                  accept="image/*,video/mp4,video/quicktime,video/x-m4v"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
@@ -196,18 +196,28 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                         img.src = url;
                       } else {
                         const video = document.createElement('video');
-                        video.onloadedmetadata = () => {
-                          onUpdateSlots(slotId, {
-                            url,
-                            type,
-                            aspectRatio: video.videoWidth / video.videoHeight,
-                            startTime: 0,
-                            endTime: video.duration
-                          });
+                        video.preload = 'metadata';
+                        const checkDuration = () => {
+                          if (video.duration && !isNaN(video.duration) && video.duration !== Infinity) {
+                            onUpdateSlots(slotId, {
+                              url,
+                              type,
+                              aspectRatio: video.videoWidth / video.videoHeight,
+                              startTime: 0,
+                              endTime: video.duration
+                            });
+                            video.removeEventListener('loadedmetadata', checkDuration);
+                            video.removeEventListener('durationchange', checkDuration);
+                          }
                         };
+                        video.addEventListener('loadedmetadata', checkDuration);
+                        video.addEventListener('durationchange', checkDuration);
                         video.src = url;
+                        video.load();
                       }
                     }
+                    // Reset input value so the same file can be selected again after reset
+                    e.target.value = '';
                   }}
                 />
                 <label 
