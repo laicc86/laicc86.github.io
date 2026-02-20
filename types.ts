@@ -4,13 +4,18 @@ export interface TimingConfig {
   t2: number; // Fade to Black
   t3: number; // Entry Duration
   t4: number; // Bounce Duration
+  tHold: number; // Hold Before Overlay
   t5: number; // Overlay Fade
   t6: number; // Static / Outro
 }
 
-export interface ImageSlotData {
+export interface MediaSlotData {
   url: string | null;
+  type: 'image' | 'video';
   xOffset: number; // 0 to 100 percentage for panning
+  aspectRatio?: number; // width / height
+  startTime: number; // For videos
+  endTime?: number; // For videos, defaults to duration
 }
 
 export interface TypographyConfig {
@@ -27,10 +32,10 @@ export interface AnimationConfig {
 
 export interface AppState {
   slots: {
-    a: ImageSlotData;
-    b: ImageSlotData;
-    c: ImageSlotData;
-    d: ImageSlotData;
+    a: MediaSlotData;
+    b: MediaSlotData;
+    c: MediaSlotData;
+    d: MediaSlotData;
   };
   timing: TimingConfig;
   typography: TypographyConfig;

@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Settings, Play, Image as ImageIcon, Type, Clock, Save, Download, RotateCcw, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { AppState, TimingConfig, ImageSlotData, TypographyConfig, AnimationConfig } from './types';
+import { AppState, TimingConfig, MediaSlotData, TypographyConfig, AnimationConfig } from './types';
 import { INITIAL_STATE, TIMING_LABELS } from './constants';
-import PreviewWindow from './components/PreviewWindow';
 import ControlPanel from './components/ControlPanel';
+import { Muxer, ArrayBufferTarget } from 'webm-muxer';
 
 const STORAGE_KEY = 'video_header_gen_v2';
 
@@ -15,11 +15,11 @@ const App: React.FC = () => {
   });
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [animationKey, setAnimationKey] = useState(0);
   
   const [renderStatus, setRenderStatus] = useState<'idle' | 'rendering' | 'completed' | 'error'>('idle');
   const [renderProgress, setRenderProgress] = useState(0);
   const [renderError, setRenderError] = useState<string | null>(null);
+  const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -28,11 +28,54 @@ const App: React.FC = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
-  const handleUpdateSlots = (slotId: keyof AppState['slots'], data: Partial<ImageSlotData>) => {
-    setState(prev => ({
-      ...prev,
-      slots: { ...prev.slots, [slotId]: { ...prev.slots[slotId], ...data } }
-    }));
+  // Detect aspect ratios for media that don't have them
+  useEffect(() => {
+    const slotsToUpdate: Array<{id: keyof AppState['slots'], ratio: number}> = [];
+    
+    const checkRatios = async () => {
+      const entries = Object.entries(state.slots) as [keyof AppState['slots'], MediaSlotData][];
+      for (const [id, slot] of entries) {
+        if (slot.url && slot.aspectRatio === undefined) {
+          try {
+            const media = await loadMedia(slot.url, slot.type);
+            const ratio = slot.type === 'image' 
+              ? (media as HTMLImageElement).width / (media as HTMLImageElement).height
+              : (media as HTMLVideoElement).videoWidth / (media as HTMLVideoElement).videoHeight;
+            slotsToUpdate.push({ id, ratio });
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+      
+      if (slotsToUpdate.length > 0) {
+        setState(prev => {
+          const newSlots = { ...prev.slots };
+          slotsToUpdate.forEach(({ id, ratio }) => {
+            newSlots[id] = { ...newSlots[id], aspectRatio: ratio };
+          });
+          return { ...prev, slots: newSlots };
+        });
+      }
+    };
+    
+    checkRatios();
+  }, []);
+
+  const handleUpdateSlots = (slotId: keyof AppState['slots'], data: Partial<MediaSlotData>) => {
+    setState(prev => {
+      // Revoke old URL if it's being replaced to prevent memory leaks
+      if (data.url && prev.slots[slotId].url && data.url !== prev.slots[slotId].url) {
+        // Only revoke if it's a blob URL we created
+        if (prev.slots[slotId].url?.startsWith('blob:')) {
+          URL.revokeObjectURL(prev.slots[slotId].url!);
+        }
+      }
+      return {
+        ...prev,
+        slots: { ...prev.slots, [slotId]: { ...prev.slots[slotId], ...data } }
+      };
+    });
   };
 
   const handleUpdateTiming = (timing: Partial<TimingConfig>) => {
@@ -51,68 +94,141 @@ const App: React.FC = () => {
     return (Object.values(state.timing) as number[]).reduce((acc, val) => acc + val, 0);
   }, [state.timing]);
 
-  const loadImage = (url: string): Promise<HTMLImageElement> => {
+  const loadMedia = (url: string, type: 'image' | 'video'): Promise<HTMLImageElement | HTMLVideoElement> => {
     return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(`Failed to load image: ${url}`);
-      img.src = url;
+      if (type === 'image') {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(`Failed to load image: ${url}`);
+        img.src = url;
+      } else {
+        const video = document.createElement('video');
+        video.crossOrigin = "anonymous";
+        video.muted = true;
+        video.playsInline = true;
+        video.onloadeddata = () => resolve(video);
+        video.onerror = () => reject(`Failed to load video: ${url}`);
+        video.src = url;
+        video.load();
+      }
     });
   };
 
   const startRecording = async () => {
     if (!canvasRef.current) return;
+    
+    // Check for WebCodecs support
+    if (!window.VideoEncoder) {
+      setRenderError("Your browser does not support high-quality WebCodecs recording. Please use Chrome or Edge.");
+      setRenderStatus('error');
+      return;
+    }
+
     setRenderStatus('rendering');
     setRenderProgress(0);
     setRenderError(null);
+    setRecordedUrl(null);
+    setIsPlaying(true);
 
     try {
-      const images = await Promise.all([
-        loadImage(state.slots.a.url || ''),
-        loadImage(state.slots.b.url || ''),
-        loadImage(state.slots.c.url || ''),
-        loadImage(state.slots.d.url || '')
+      const mediaElements = await Promise.all([
+        loadMedia(state.slots.a.url || '', state.slots.a.type),
+        loadMedia(state.slots.b.url || '', state.slots.b.type),
+        loadMedia(state.slots.c.url || '', state.slots.c.type),
+        loadMedia(state.slots.d.url || '', state.slots.d.type)
       ]);
-      const [imgA, imgB, imgC, imgD] = images;
+      const [mediaA, mediaB, mediaC, mediaD] = mediaElements;
 
       const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d', { alpha: false });
+      const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
       if (!ctx) throw new Error("Canvas context failed");
 
-      const stream = canvas.captureStream(30); 
-      const recorder = new MediaRecorder(stream, { 
-        mimeType: 'video/webm;codecs=vp9',
-        videoBitsPerSecond: 10000000 
-      });
-      
-      chunksRef.current = [];
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `header-${Date.now()}.webm`;
-        a.click();
-        setRenderStatus('completed');
-        setTimeout(() => setRenderStatus('idle'), 3000);
-      };
-
-      recorder.start();
-
       const FPS = 30;
-      const frameDuration = 1000 / FPS; 
       const totalFrames = Math.ceil(totalDuration * FPS);
       const { timing, slots, typography, animation } = state;
 
+      // Initialize Muxer and Encoder
+      const muxer = new Muxer({
+        target: new ArrayBufferTarget(),
+        video: {
+          codec: 'V_VP9',
+          width: 1920,
+          height: 1080,
+          frameRate: FPS
+        }
+      });
+
+      const videoEncoder = new VideoEncoder({
+        output: (chunk, metadata) => muxer.addVideoChunk(chunk, metadata),
+        error: (e) => {
+          console.error('VideoEncoder error:', e);
+          setRenderError(`Encoder error: ${e.message}`);
+        }
+      });
+
+      videoEncoder.configure({
+        codec: 'vp09.00.10.08', // VP9 Profile 0, Level 1.0, 8-bit
+        width: 1920,
+        height: 1080,
+        bitrate: 10_000_000, // 10 Mbps
+        framerate: FPS,
+        latencyMode: 'quality'
+      });
+
+      // Pre-calculate media dimensions
+      const getMediaDims = (el: HTMLImageElement | HTMLVideoElement, type: 'image' | 'video') => {
+        return {
+          w: type === 'image' ? (el as HTMLImageElement).width : (el as HTMLVideoElement).videoWidth,
+          h: type === 'image' ? (el as HTMLImageElement).height : (el as HTMLVideoElement).videoHeight
+        };
+      };
+
+      const dimsA = getMediaDims(mediaA, slots.a.type);
+      const dimsB = getMediaDims(mediaB, slots.b.type);
+      const dimsC = getMediaDims(mediaC, slots.c.type);
+      const dimsD = getMediaDims(mediaD, slots.d.type);
+
+      const seekVideo = (video: HTMLVideoElement, startTime: number, endTime: number | undefined, elapsed: number) => {
+        return new Promise<void>((resolve) => {
+          const effectiveEndTime = endTime || video.duration;
+          const segmentDuration = effectiveEndTime - startTime;
+          let targetTime = startTime;
+          
+          if (segmentDuration > 0) {
+            targetTime = startTime + (elapsed % segmentDuration);
+          }
+
+          if (Math.abs(video.currentTime - targetTime) < 0.01) {
+            resolve();
+            return;
+          }
+
+          const onSeeked = () => {
+            video.removeEventListener('seeked', onSeeked);
+            resolve();
+          };
+          video.addEventListener('seeked', onSeeked);
+          video.currentTime = targetTime;
+        });
+      };
+
       for (let frame = 0; frame <= totalFrames; frame++) {
-        const frameStartTime = performance.now();
         const t = frame / FPS; 
-        setRenderProgress((frame / totalFrames) * 100);
+        
+        if (frame % 5 === 0 || frame === totalFrames) {
+          setRenderProgress((frame / totalFrames) * 100);
+        }
+
+        const syncPromises = [];
+        if (slots.a.type === 'video') syncPromises.push(seekVideo(mediaA as HTMLVideoElement, slots.a.startTime, slots.a.endTime, t));
+        if (t >= timing.t1 + timing.t2) {
+          const ct = t - (timing.t1 + timing.t2);
+          if (slots.b.type === 'video') syncPromises.push(seekVideo(mediaB as HTMLVideoElement, slots.b.startTime, slots.b.endTime, ct));
+          if (slots.c.type === 'video') syncPromises.push(seekVideo(mediaC as HTMLVideoElement, slots.c.startTime, slots.c.endTime, ct));
+          if (slots.d.type === 'video') syncPromises.push(seekVideo(mediaD as HTMLVideoElement, slots.d.startTime, slots.d.endTime, ct));
+        }
+        await Promise.all(syncPromises);
 
         ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, 1920, 1080);
@@ -124,7 +240,7 @@ const App: React.FC = () => {
           ctx.globalAlpha = introOpacity;
           const w = 1920 * kenBurns;
           const h = 1080 * kenBurns;
-          ctx.drawImage(imgA, (1920 - w) / 2, (1080 - h) / 2, w, h);
+          ctx.drawImage(mediaA as any, (1920 - w) / 2, (1080 - h) / 2, w, h);
           ctx.restore();
         }
 
@@ -132,16 +248,36 @@ const App: React.FC = () => {
           const ct = t - (timing.t1 + timing.t2);
           const panelWidth = 1920 / 3;
 
-          const drawPanel = (img: HTMLImageElement, index: number, xOff: number, yOff: number, scale: number) => {
+          const drawPanel = (
+            media: HTMLImageElement | HTMLVideoElement, 
+            index: number, 
+            xOff: number, 
+            yOff: number, 
+            scale: number, 
+            type: 'image' | 'video',
+            dims: { w: number, h: number }
+          ) => {
+            const mediaAspect = dims.w / dims.h;
+            const panelAspect = panelWidth / 1080;
+            
+            let drawW, drawH;
+            if (mediaAspect > panelAspect) {
+              drawH = 1080 * scale;
+              drawW = drawH * mediaAspect;
+            } else {
+              drawW = panelWidth * scale;
+              drawH = drawW / mediaAspect;
+            }
+
+            const overflowX = drawW - panelWidth;
+            const imgTargetX = (index * panelWidth) - (overflowX * (xOff / 100));
+            const imgTargetY = (1080 - drawH) / 2 + yOff;
+
             ctx.save();
             ctx.beginPath();
             ctx.rect(index * panelWidth, 0, panelWidth, 1080);
             ctx.clip();
-            const drawW = 1920 * scale;
-            const drawH = 1080 * scale;
-            const centerX = (index * panelWidth) + (panelWidth / 2);
-            const imgTargetX = centerX - (drawW * (xOff / 100));
-            ctx.drawImage(img, imgTargetX, (1080 - drawH) / 2 + yOff, drawW, drawH);
+            ctx.drawImage(media as any, imgTargetX, imgTargetY, drawW, drawH);
             ctx.restore();
           };
 
@@ -156,16 +292,22 @@ const App: React.FC = () => {
           ctx.globalAlpha = 1;
           if (ct < timing.t3) {
             const ease = 1 - Math.pow(1 - entryProgress, 3);
-            ctx.save(); ctx.translate(-panelWidth * (1 - ease), 0); drawPanel(imgB, 0, slots.b.xOffset, 0, 1); ctx.restore();
-            ctx.save(); ctx.translate(0, -1080 * (1 - ease)); drawPanel(imgC, 1, slots.c.xOffset, 0, 1); ctx.restore();
-            ctx.save(); ctx.translate(panelWidth * (1 - ease), 0); drawPanel(imgD, 2, slots.d.xOffset, 0, 1); ctx.restore();
+            drawPanel(mediaB, 0, slots.b.xOffset, 0, 1, slots.b.type, dimsB);
+            drawPanel(mediaC, 1, slots.c.xOffset, 0, 1, slots.c.type, dimsC);
+            drawPanel(mediaD, 2, slots.d.xOffset, 0, 1, slots.d.type, dimsD);
+            
+            ctx.fillStyle = '#000000';
+            const offset = panelWidth * (1 - ease);
+            ctx.fillRect(0, 0, offset, 1080);
+            ctx.fillRect(panelWidth, 0, panelWidth, 1080 * (1 - ease));
+            ctx.fillRect(1920 - offset, 0, offset, 1080);
           } else {
-            drawPanel(imgB, 0, slots.b.xOffset, 0, getBounce(0));
-            drawPanel(imgC, 1, slots.c.xOffset, 0, getBounce(timing.t4/3));
-            drawPanel(imgD, 2, slots.d.xOffset, 0, getBounce((timing.t4/3)*2));
+            drawPanel(mediaB, 0, slots.b.xOffset, 0, getBounce(0), slots.b.type, dimsB);
+            drawPanel(mediaC, 1, slots.c.xOffset, 0, getBounce(timing.t4/3), slots.c.type, dimsC);
+            drawPanel(mediaD, 2, slots.d.xOffset, 0, getBounce((timing.t4/3)*2), slots.d.type, dimsD);
           }
 
-          const ot = ct - timing.t3 - timing.t4;
+          const ot = ct - timing.t3 - timing.t4 - timing.tHold;
           if (ot > 0) {
             const overlayOpacity = Math.min(ot / timing.t5, 1);
             ctx.save();
@@ -188,23 +330,65 @@ const App: React.FC = () => {
           }
         }
 
-        const drawDuration = performance.now() - frameStartTime;
-        const waitTime = Math.max(0, frameDuration - drawDuration);
-        await new Promise(r => setTimeout(r, waitTime));
+        // Encode frame
+        const frameBitmap = await createImageBitmap(canvas);
+        const videoFrame = new VideoFrame(frameBitmap, { timestamp: (frame * 1000000) / FPS });
+        videoEncoder.encode(videoFrame, { keyFrame: frame % 60 === 0 });
+        videoFrame.close();
+        frameBitmap.close();
+
+        await new Promise(r => requestAnimationFrame(r));
       }
 
-      recorder.stop();
+      // Finalize
+      await videoEncoder.flush();
+      videoEncoder.close();
+      muxer.finalize();
+
+      const { buffer } = muxer.target as ArrayBufferTarget;
+      const blob = new Blob([buffer], { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      
+      setRecordedUrl(prev => {
+        if (prev) URL.revokeObjectURL(prev);
+        return url;
+      });
+      
+      setRenderStatus('completed');
+      setIsPlaying(false);
+
+      // Cleanup media
+      mediaElements.forEach(el => {
+        if (el instanceof HTMLVideoElement) {
+          el.pause();
+          el.src = "";
+          el.load();
+          el.remove();
+        }
+      });
 
     } catch (err) {
       console.error(err);
-      setRenderError("Recording failed. Check your images and try again.");
+      setRenderError("Recording failed. Check your assets and try again.");
       setRenderStatus('error');
+      setIsPlaying(false);
     }
   };
 
   const togglePlayback = () => {
-    setAnimationKey(prev => prev + 1);
-    setIsPlaying(!isPlaying);
+    if (isPlaying) {
+      // Logic to stop if needed, but for now we just let it finish
+      return;
+    }
+    startRecording();
+  };
+
+  const downloadVideo = () => {
+    if (!recordedUrl) return;
+    const a = document.createElement('a');
+    a.href = recordedUrl;
+    a.download = `header-${Date.now()}.webm`;
+    a.click();
   };
 
   return (
@@ -243,17 +427,18 @@ const App: React.FC = () => {
             <span className="text-sm font-medium text-slate-400">Total Duration</span>
             <span className="text-lg font-bold text-blue-400 font-mono tracking-tighter">{totalDuration.toFixed(1)}s</span>
           </div>
-          <button 
-            onClick={startRecording}
-            disabled={renderStatus === 'rendering'}
-            className={`w-full py-3.5 px-4 rounded-xl font-bold transition-all shadow-xl flex items-center justify-center gap-2 border border-blue-400/20 ${
-              renderStatus === 'rendering' ? 'bg-slate-700 cursor-wait opacity-50' : 'bg-blue-600 hover:bg-blue-500 text-white active:scale-[0.98]'
-            }`}
-          >
-            {renderStatus === 'rendering' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-            {renderStatus === 'rendering' ? `Exporting... ${Math.round(renderProgress)}%` : 'Export WebM (Synced)'}
-          </button>
-          <p className="text-[9px] text-slate-500 mt-3 text-center uppercase font-bold tracking-[0.2em] opacity-50">Real-time Encoded 30FPS</p>
+          <div className="flex flex-col gap-3">
+            {recordedUrl && (
+              <button 
+                onClick={downloadVideo}
+                className="w-full py-3 px-4 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-xl flex items-center justify-center gap-2 border border-emerald-400/20"
+              >
+                <Download className="w-5 h-5" />
+                Download Last Recording
+              </button>
+            )}
+            <p className="text-[9px] text-slate-500 text-center uppercase font-bold tracking-[0.2em] opacity-50">Recording is automatic during preview</p>
+          </div>
         </div>
       </aside>
 
@@ -274,18 +459,52 @@ const App: React.FC = () => {
             </div>
             <button 
               onClick={togglePlayback}
+              disabled={isPlaying}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-bold transition-all shadow-lg border ${
                 isPlaying 
-                ? 'bg-rose-500 border-rose-400 text-white active:scale-95' 
-                : 'bg-white border-slate-200 text-slate-900 hover:bg-slate-50 active:scale-95'
+                ? 'bg-slate-800 border-slate-700 text-slate-500 cursor-wait' 
+                : 'bg-blue-600 border-blue-500 text-white hover:bg-blue-500 active:scale-95'
               }`}
             >
-              {isPlaying ? <RotateCcw className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current" />}
-              {isPlaying ? 'Reset Engine' : 'Run Preview Sequence'}
+              {isPlaying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-current" />}
+              {isPlaying ? `Recording... ${Math.round(renderProgress)}%` : 'Preview & Record Sequence'}
             </button>
           </div>
-          <div className="aspect-video w-full bg-[#000000] rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)] border border-slate-800/50 relative">
-            <PreviewWindow state={state} isPlaying={isPlaying} onComplete={() => setIsPlaying(false)} key={animationKey} />
+          <div className="aspect-video w-full bg-[#000000] rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)] border border-slate-800/50 relative flex items-center justify-center">
+            <canvas 
+              ref={canvasRef} 
+              width="1920" 
+              height="1080" 
+              className="w-full h-full object-contain"
+            />
+            {!isPlaying && !recordedUrl && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+                 <div className="bg-slate-950 border border-slate-800 p-6 rounded-2xl shadow-2xl text-center">
+                   <div className="text-blue-400 font-bold mb-1 uppercase tracking-widest">Engine Ready</div>
+                   <div className="text-slate-500 text-xs">Click Preview & Record to start</div>
+                 </div>
+              </div>
+            )}
+            {renderStatus === 'completed' && recordedUrl && !isPlaying && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-emerald-950/40 backdrop-blur-sm">
+                 <div className="bg-slate-950 border border-emerald-500/30 p-8 rounded-3xl shadow-2xl text-center flex flex-col items-center gap-4">
+                   <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                     <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                   </div>
+                   <div>
+                     <div className="text-white font-bold text-lg">Recording Finished!</div>
+                     <div className="text-slate-400 text-sm">Your high-quality WebM is ready for download.</div>
+                   </div>
+                   <button 
+                    onClick={downloadVideo}
+                    className="mt-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full font-bold transition-all flex items-center gap-2 shadow-lg"
+                   >
+                     <Download className="w-4 h-4" />
+                     Download Video
+                   </button>
+                 </div>
+              </div>
+            )}
           </div>
         </div>
       </main>

@@ -1,12 +1,14 @@
 
 import React, { useRef } from 'react';
 import { ImageIcon, Clock, Type, Crop, AlignLeft, AlignCenter, AlignRight, Zap, MousePointer2 } from 'lucide-react';
-import { AppState, TimingConfig, ImageSlotData, TypographyConfig, AnimationConfig } from '../types';
+import { AppState, TimingConfig, MediaSlotData, TypographyConfig, AnimationConfig } from '../types';
 import { FONTS, TIMING_LABELS } from '../constants';
 
-interface ImageCropSelectorProps {
+interface MediaCropSelectorProps {
   url: string | null;
+  type: 'image' | 'video';
   xOffset: number;
+  aspectRatio?: number;
   onChange: (val: number) => void;
 }
 
@@ -14,7 +16,7 @@ interface ImageCropSelectorProps {
  * Visual Crop Selector Component
  * Optimized for high contrast and precise alignment
  */
-const ImageCropSelector: React.FC<ImageCropSelectorProps> = ({ url, xOffset, onChange }) => {
+const MediaCropSelector: React.FC<MediaCropSelectorProps> = ({ url, type, xOffset, aspectRatio = 1.777, onChange }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleUpdate = (clientX: number) => {
@@ -23,15 +25,23 @@ const ImageCropSelector: React.FC<ImageCropSelectorProps> = ({ url, xOffset, onC
     const x = clientX - rect.left;
     const width = rect.width;
     
-    // Mask is exactly 1/3 of the total width
+    // The mask width is always 1/3 of a 16:9 container (which is what the selector displays)
     const maskWidth = width / 3;
-    const maxMove = width - maskWidth;
     
-    // Calculate new left based on mouse center
+    // However, the image itself might not be 16:9.
+    // We want to know how much horizontal overflow there is when the image covers the panel.
+    const panelAspect = (1920/3) / 1080;
+    const imageAspect = aspectRatio;
+    
+    if (imageAspect <= panelAspect) {
+      // No horizontal overflow, panning is disabled or useless
+      onChange(50);
+      return;
+    }
+
+    const maxMove = width - maskWidth;
     let newLeft = x - (maskWidth / 2);
     newLeft = Math.max(0, Math.min(newLeft, maxMove));
-    
-    // Convert to 0-100 percentage
     const percentage = (newLeft / maxMove) * 100;
     onChange(Math.round(percentage));
   };
@@ -58,11 +68,18 @@ const ImageCropSelector: React.FC<ImageCropSelectorProps> = ({ url, xOffset, onC
         <>
           {/* Base Layer: Dimmed background */}
           <div className="absolute inset-0 z-0">
-            <img 
-              src={url} 
-              className="w-full h-full object-cover opacity-10 grayscale pointer-events-none" 
-              alt="Reference" 
-            />
+            {type === 'image' ? (
+              <img 
+                src={url} 
+                className="w-full h-full object-cover opacity-10 grayscale pointer-events-none" 
+                alt="Reference" 
+              />
+            ) : (
+              <video 
+                src={url} 
+                className="w-full h-full object-cover opacity-10 grayscale pointer-events-none" 
+              />
+            )}
           </div>
           
           {/* Active Mask: The 1/3 window */}
@@ -75,14 +92,23 @@ const ImageCropSelector: React.FC<ImageCropSelectorProps> = ({ url, xOffset, onC
           >
             {/* Inner High-Resolution Clip */}
             <div className="w-full h-full overflow-hidden relative bg-black/20">
-              <img 
-                src={url} 
-                className="absolute h-full object-cover max-w-none" 
-                style={{
-                  width: '300%', 
-                  left: `-${xOffset * 2}%`
-                }} 
-              />
+              {type === 'image' ? (
+                <img 
+                  src={url} 
+                  className="absolute inset-0 w-full h-full object-cover" 
+                  style={{
+                    objectPosition: `${xOffset}% center`
+                  }} 
+                />
+              ) : (
+                <video 
+                  src={url} 
+                  className="absolute inset-0 w-full h-full object-cover" 
+                  style={{
+                    objectPosition: `${xOffset}% center`
+                  }} 
+                />
+              )}
             </div>
             
             {/* Guides Layer - Isolated for clarity */}
@@ -93,9 +119,14 @@ const ImageCropSelector: React.FC<ImageCropSelectorProps> = ({ url, xOffset, onC
 
             {/* High Contrast Label - Outside internal clip but inside mask container */}
             <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 pointer-events-none flex items-center justify-center w-full px-2">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 rounded shadow-[0_4px_10px_rgba(0,0,0,0.4)] backdrop-blur-md">
-                <MousePointer2 className="w-2.5 h-2.5 text-white fill-current" />
-                <span className="text-[9px] font-black text-white tracking-[0.1em] uppercase">Selected</span>
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 rounded shadow-[0_4px_10px_rgba(0,0,0,0.4)] backdrop-blur-md">
+                  <MousePointer2 className="w-2.5 h-2.5 text-white fill-current" />
+                  <span className="text-[9px] font-black text-white tracking-[0.1em] uppercase">Selected</span>
+                </div>
+                <div className="px-1.5 py-0.5 bg-slate-900/80 rounded text-[7px] font-bold text-slate-400 uppercase tracking-tighter">
+                  Ratio: {aspectRatio > 1 ? '16:9' : '9:16'} ({aspectRatio.toFixed(2)})
+                </div>
               </div>
             </div>
           </div>
@@ -112,7 +143,7 @@ const ImageCropSelector: React.FC<ImageCropSelectorProps> = ({ url, xOffset, onC
 
 interface ControlPanelProps {
   state: AppState;
-  onUpdateSlots: (slotId: keyof AppState['slots'], data: Partial<ImageSlotData>) => void;
+  onUpdateSlots: (slotId: keyof AppState['slots'], data: Partial<MediaSlotData>) => void;
   onUpdateTiming: (timing: Partial<TimingConfig>) => void;
   onUpdateTypography: (typography: Partial<TypographyConfig>) => void;
   onUpdateAnimation: (animation: Partial<AnimationConfig>) => void;
@@ -145,12 +176,37 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   type="file" 
                   id={`file-${slotId}`} 
                   className="hidden" 
-                  accept="image/*"
+                  accept="image/*,video/*"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
                       const url = URL.createObjectURL(file);
-                      onUpdateSlots(slotId, { url });
+                      const type = file.type.startsWith('video') ? 'video' : 'image';
+                      
+                      if (type === 'image') {
+                        const img = new Image();
+                        img.onload = () => {
+                          onUpdateSlots(slotId, { 
+                            url, 
+                            type,
+                            aspectRatio: img.width / img.height,
+                            startTime: 0
+                          });
+                        };
+                        img.src = url;
+                      } else {
+                        const video = document.createElement('video');
+                        video.onloadedmetadata = () => {
+                          onUpdateSlots(slotId, {
+                            url,
+                            type,
+                            aspectRatio: video.videoWidth / video.videoHeight,
+                            startTime: 0,
+                            endTime: video.duration
+                          });
+                        };
+                        video.src = url;
+                      }
                     }
                   }}
                 />
@@ -165,17 +221,54 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               {slotId === 'a' ? (
                 <div className="aspect-video w-full bg-slate-950 rounded-xl overflow-hidden border border-slate-800 relative shadow-inner">
                   {state.slots.a.url ? (
-                    <img src={state.slots.a.url} className="w-full h-full object-cover" alt="Intro" />
+                    state.slots.a.type === 'image' ? (
+                      <img src={state.slots.a.url} className="w-full h-full object-cover" alt="Intro" />
+                    ) : (
+                      <video src={state.slots.a.url} className="w-full h-full object-cover" />
+                    )
                   ) : (
                     <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-6 h-6 text-slate-800" /></div>
                   )}
                 </div>
               ) : (
-                <ImageCropSelector 
+                <MediaCropSelector 
                   url={state.slots[slotId].url}
+                  type={state.slots[slotId].type}
                   xOffset={state.slots[slotId].xOffset}
+                  aspectRatio={state.slots[slotId].aspectRatio}
                   onChange={(val) => onUpdateSlots(slotId, { xOffset: val })}
                 />
+              )}
+
+              {state.slots[slotId].type === 'video' && (
+                <div className="flex flex-col gap-3 mt-1 bg-slate-800/20 p-3 rounded-xl border border-slate-800/50">
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Start Time</label>
+                      <span className="text-[10px] font-mono text-blue-400 font-bold">{state.slots[slotId].startTime.toFixed(1)}s</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="0" max={state.slots[slotId].endTime || 60} step="0.1"
+                      value={state.slots[slotId].startTime} 
+                      onChange={(e) => onUpdateSlots(slotId, { startTime: parseFloat(e.target.value) })}
+                      className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500" 
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">End Time</label>
+                      <span className="text-[10px] font-mono text-rose-400 font-bold">{(state.slots[slotId].endTime || 0).toFixed(1)}s</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min={state.slots[slotId].startTime} max={120} step="0.1"
+                      value={state.slots[slotId].endTime || 0} 
+                      onChange={(e) => onUpdateSlots(slotId, { endTime: parseFloat(e.target.value) })}
+                      className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500" 
+                    />
+                  </div>
+                </div>
               )}
             </div>
           ))}
