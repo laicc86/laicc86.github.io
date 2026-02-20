@@ -171,6 +171,9 @@ const App: React.FC = () => {
       const [mediaA, mediaB, mediaC, mediaD] = mediaElements;
 
       const canvas = canvasRef.current;
+      if (!canvas) {
+        throw new Error("Canvas element not found in DOM");
+      }
       const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
       if (!ctx) throw new Error("Canvas context failed");
 
@@ -455,7 +458,6 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen bg-slate-950 overflow-hidden text-slate-200">
-      <canvas ref={canvasRef} width="1920" height="1080" className="hidden" />
       
       {/* Sidebar - Refined Stacking */}
       <aside className="w-96 bg-slate-900 border-r border-slate-800 flex flex-col h-full overflow-hidden relative z-50">
