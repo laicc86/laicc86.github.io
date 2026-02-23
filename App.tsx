@@ -142,7 +142,12 @@ const App: React.FC = () => {
   };
 
   const startRecording = async () => {
-    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      setRenderError("Preview canvas is not ready. Please refresh the page.");
+      setRenderStatus('error');
+      return;
+    }
     
     // Check for WebCodecs support
     if (!window.VideoEncoder) {
@@ -170,10 +175,6 @@ const App: React.FC = () => {
       ]);
       const [mediaA, mediaB, mediaC, mediaD] = mediaElements;
 
-      const canvas = canvasRef.current;
-      if (!canvas) {
-        throw new Error("Canvas element not found in DOM");
-      }
       const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
       if (!ctx) throw new Error("Canvas context failed");
 
@@ -541,8 +542,9 @@ const App: React.FC = () => {
               {isPlaying ? `Stop Preview (${Math.round(renderProgress)}%)` : 'Preview & Record Sequence'}
             </button>
           </div>
-          <div className="aspect-video w-full bg-[#000000] rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)] border border-slate-800/50 relative flex items-center justify-center">
+          <div key="canvas-container" className="aspect-video w-full bg-[#000000] rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)] border border-slate-800/50 relative flex items-center justify-center">
             <canvas 
+              key="main-preview-canvas"
               ref={canvasRef} 
               width="1920" 
               height="1080" 
