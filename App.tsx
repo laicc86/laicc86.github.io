@@ -445,6 +445,14 @@ const App: React.FC = () => {
       stopRequestedRef.current = true;
       return;
     }
+    
+    if (!canvasRef.current) {
+      console.error("Canvas ref is null at togglePlayback");
+      setRenderError("Preview canvas is not ready. Please refresh or wait a moment.");
+      setRenderStatus('error');
+      return;
+    }
+
     startRecording();
   };
 
