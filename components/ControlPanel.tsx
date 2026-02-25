@@ -10,13 +10,14 @@ interface MediaCropSelectorProps {
   xOffset: number;
   aspectRatio?: number;
   onChange: (val: number) => void;
+  t: any;
 }
 
 /**
  * Visual Crop Selector Component
  * Optimized for high contrast and precise alignment
  */
-const MediaCropSelector: React.FC<MediaCropSelectorProps> = ({ url, type, xOffset, aspectRatio = 1.777, onChange }) => {
+const MediaCropSelector: React.FC<MediaCropSelectorProps> = ({ url, type, xOffset, aspectRatio = 1.777, onChange, t }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleUpdate = (clientX: number) => {
@@ -122,10 +123,10 @@ const MediaCropSelector: React.FC<MediaCropSelectorProps> = ({ url, type, xOffse
               <div className="flex flex-col items-center gap-1">
                 <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 rounded shadow-[0_4px_10px_rgba(0,0,0,0.4)] backdrop-blur-md">
                   <MousePointer2 className="w-2.5 h-2.5 text-white fill-current" />
-                  <span className="text-[9px] font-black text-white tracking-[0.1em] uppercase">Selected</span>
+                  <span className="text-[9px] font-black text-white tracking-[0.1em] uppercase">{t.selected}</span>
                 </div>
                 <div className="px-1.5 py-0.5 bg-slate-900/80 rounded text-[7px] font-bold text-slate-400 uppercase tracking-tighter">
-                  Ratio: {aspectRatio > 1 ? '16:9' : '9:16'} ({aspectRatio.toFixed(2)})
+                  {t.ratio}: {aspectRatio > 1 ? '16:9' : '9:16'} ({aspectRatio.toFixed(2)})
                 </div>
               </div>
             </div>
@@ -134,7 +135,7 @@ const MediaCropSelector: React.FC<MediaCropSelectorProps> = ({ url, type, xOffse
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center text-slate-700 gap-2">
            <ImageIcon className="w-8 h-8 opacity-20" />
-           <span className="text-[10px] font-bold uppercase tracking-widest">No Asset Loaded</span>
+           <span className="text-[10px] font-bold uppercase tracking-widest">{t.noAsset}</span>
         </div>
       )}
     </div>
@@ -147,6 +148,10 @@ interface ControlPanelProps {
   onUpdateTiming: (timing: Partial<TimingConfig>) => void;
   onUpdateTypography: (typography: Partial<TypographyConfig>) => void;
   onUpdateAnimation: (animation: Partial<AnimationConfig>) => void;
+  onUpdateQuality: (quality: 'standard' | 'high') => void;
+  hasRecording: boolean;
+  lang: string;
+  t: any;
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({ 
@@ -154,7 +159,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onUpdateSlots, 
   onUpdateTiming, 
   onUpdateTypography,
-  onUpdateAnimation
+  onUpdateAnimation,
+  onUpdateQuality,
+  hasRecording,
+  lang,
+  t
 }) => {
   return (
     <div className="flex flex-col gap-10 p-6">
@@ -162,7 +171,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       <section>
         <div className="flex items-center gap-2 mb-4">
           <ImageIcon className="w-4 h-4 text-blue-400" />
-          <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-500">Composition Assets</h3>
+          <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-500">{t.mediaSlots}</h3>
         </div>
         <div className="grid grid-cols-1 gap-8">
           {(['a', 'b', 'c', 'd'] as const).map(slotId => (
@@ -170,7 +179,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold uppercase text-slate-400 tracking-tight flex items-center gap-2">
                   <div className={`w-1.5 h-1.5 rounded-full ${slotId === 'a' ? 'bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]' : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]'}`} />
-                  {slotId === 'a' ? 'Intro Background (16:9)' : `Panel ${slotId.toUpperCase()} Composition`}
+                  {slotId === 'a' ? t.slotA : 
+                   slotId === 'b' ? t.slotB :
+                   slotId === 'c' ? t.slotC : t.slotD}
                 </span>
                 <input 
                   type="file" 
@@ -204,7 +215,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                               type,
                               aspectRatio: video.videoWidth / video.videoHeight,
                               startTime: 0,
-                              endTime: video.duration
+                              endTime: video.duration,
+                              duration: video.duration
                             });
                             video.removeEventListener('loadedmetadata', checkDuration);
                             video.removeEventListener('durationchange', checkDuration);
@@ -224,7 +236,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   htmlFor={`file-${slotId}`} 
                   className="text-[9px] font-bold uppercase tracking-widest bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-lg cursor-pointer transition-all active:scale-95"
                 >
-                  Replace
+                  {t.replace}
                 </label>
               </div>
 
@@ -247,19 +259,20 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   xOffset={state.slots[slotId].xOffset}
                   aspectRatio={state.slots[slotId].aspectRatio}
                   onChange={(val) => onUpdateSlots(slotId, { xOffset: val })}
+                  t={t}
                 />
               )}
 
               {state.slots[slotId].type === 'video' && (
-                <div className="flex flex-col gap-3 mt-1 bg-slate-800/20 p-3 rounded-xl border border-slate-800/50">
+                  <div className="flex flex-col gap-3 mt-1 bg-slate-800/20 p-3 rounded-xl border border-slate-800/50">
                   <div className="flex flex-col gap-1.5">
                     <div className="flex justify-between items-center">
-                      <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Start Time</label>
+                      <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{t.startTime}</label>
                       <span className="text-[10px] font-mono text-blue-400 font-bold">{state.slots[slotId].startTime.toFixed(1)}s</span>
                     </div>
                     <input 
                       type="range" 
-                      min="0" max={state.slots[slotId].endTime || 60} step="0.1"
+                      min="0" max={state.slots[slotId].duration || state.slots[slotId].endTime || 60} step="0.1"
                       value={state.slots[slotId].startTime} 
                       onChange={(e) => onUpdateSlots(slotId, { startTime: parseFloat(e.target.value) })}
                       className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500" 
@@ -267,12 +280,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <div className="flex justify-between items-center">
-                      <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">End Time</label>
+                      <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{t.endTime}</label>
                       <span className="text-[10px] font-mono text-rose-400 font-bold">{(state.slots[slotId].endTime || 0).toFixed(1)}s</span>
                     </div>
                     <input 
                       type="range" 
-                      min={state.slots[slotId].startTime} max={120} step="0.1"
+                      min={state.slots[slotId].startTime} max={state.slots[slotId].duration || 120} step="0.1"
                       value={state.slots[slotId].endTime || 0} 
                       onChange={(e) => onUpdateSlots(slotId, { endTime: parseFloat(e.target.value) })}
                       className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500" 
@@ -285,48 +298,98 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
       </section>
 
+      {/* Video Quality Selection */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Zap className="w-4 h-4 text-emerald-400" />
+          <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-500">{t.videoQuality}</h3>
+        </div>
+        <div className="flex flex-col gap-3 bg-slate-800/20 p-4 rounded-2xl border border-slate-800/50">
+          {(['standard', 'high'] as const).map(q => (
+            <button
+              key={q}
+              onClick={() => onUpdateQuality(q)}
+              className={`flex flex-col items-start p-3 rounded-xl border transition-all ${
+                state.quality === q 
+                ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.1)]' 
+                : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700'
+              }`}
+            >
+              <span className="text-[10px] font-black uppercase tracking-widest">{q === 'standard' ? t.standard : t.high}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
       {/* Timing Configuration */}
       <section>
         <div className="flex items-center gap-2 mb-4">
           <Clock className="w-4 h-4 text-blue-400" />
-          <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-500">Timeline Engine</h3>
+          <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-500">{t.timelineEngine}</h3>
         </div>
         <div className="flex flex-col gap-6 bg-slate-800/20 p-5 rounded-2xl border border-slate-800/50 shadow-inner">
           <div className="grid grid-cols-1 gap-y-4">
             {Object.entries(state.timing).map(([key, value]) => (
-              <div key={key} className="flex items-center justify-between gap-4">
-                <label className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap tracking-tighter">
-                  {TIMING_LABELS[key]}
-                </label>
-                <div className="flex items-center gap-2">
-                   <input 
-                    type="number" 
-                    step="0.1" 
-                    min="0"
-                    value={value as number} 
-                    onChange={(e) => onUpdateTiming({ [key]: parseFloat(e.target.value) || 0 })}
-                    className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-blue-600 transition-colors font-mono w-20 text-right text-blue-400 shadow-sm"
-                  />
-                  <span className="text-[9px] text-slate-600 font-black">S</span>
+              <React.Fragment key={key}>
+                <div className="flex items-center justify-between gap-4">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase whitespace-nowrap tracking-tighter">
+                    {t[key]}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="number" 
+                      step="0.1" 
+                      min="0"
+                      value={value as number} 
+                      onChange={(e) => onUpdateTiming({ [key]: parseFloat(e.target.value) || 0 })}
+                      className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-blue-600 transition-colors font-mono w-20 text-right text-blue-400 shadow-sm"
+                    />
+                    <span className="text-[9px] text-slate-600 font-black">S</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+                
+                {/* Energy Scale - Positioned after Bounce Duration (t4) */}
+                {key === 't4' && (
+                  <div className="py-3 px-4 bg-blue-500/5 rounded-xl border border-blue-500/10 my-1">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-[9px] text-slate-400 uppercase font-black flex items-center gap-2 tracking-widest">
+                        <Zap className="w-3 h-3 text-yellow-500 fill-yellow-500/20" /> {t.energyScale}
+                      </span>
+                      <span className="text-[10px] font-mono text-blue-400 font-bold">x{state.animation.bounceScale.toFixed(2)}</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="1.0" max="1.3" step="0.01"
+                      value={state.animation.bounceScale} 
+                      onChange={(e) => onUpdateAnimation({ bounceScale: parseFloat(e.target.value) })}
+                      className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500" 
+                    />
+                  </div>
+                )}
 
-          <div className="pt-4 border-t border-slate-800/50">
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-[10px] text-slate-400 uppercase font-black flex items-center gap-2 tracking-widest">
-                <Zap className="w-3 h-3 text-yellow-500 fill-yellow-500/20" /> Energy Scale
-              </span>
-              <span className="text-xs font-mono text-blue-400 font-bold">x{state.animation.bounceScale.toFixed(2)}</span>
-            </div>
-            <input 
-              type="range" 
-              min="1.0" max="1.3" step="0.01"
-              value={state.animation.bounceScale} 
-              onChange={(e) => onUpdateAnimation({ bounceScale: parseFloat(e.target.value) })}
-              className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500" 
-            />
+                {/* Final Fade Color - Positioned after Final Fade Out (t7) */}
+                {key === 't7' && (
+                  <div className="pt-4 mt-2 border-t border-slate-800/50">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">
+                        {t.finalFadeColor}
+                      </span>
+                      <div className="flex bg-slate-950 border border-slate-800 rounded-lg p-1">
+                        {(['black', 'white'] as const).map(color => (
+                          <button
+                            key={color}
+                            onClick={() => onUpdateAnimation({ fadeColor: color })}
+                            className={`px-3 py-1 rounded text-[9px] font-bold uppercase transition-all ${state.animation.fadeColor === color ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                          >
+                            {color === 'black' ? t.black : t.white}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
           </div>
         </div>
       </section>
@@ -335,20 +398,23 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       <section className="mb-12">
         <div className="flex items-center gap-2 mb-4">
           <Type className="w-4 h-4 text-blue-400" />
-          <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-500">Typography</h3>
+          <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-500">{t.typography}</h3>
         </div>
         <div className="flex flex-col gap-4">
-          <textarea 
-            rows={3}
-            placeholder="Enter brand message..."
-            value={state.typography.content} 
-            onChange={(e) => onUpdateTypography({ content: e.target.value })}
-            className="bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-600 transition-colors w-full resize-none shadow-inner text-slate-200 placeholder:text-slate-700"
-          />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{t.contentLabel}</label>
+            <textarea 
+              rows={3}
+              placeholder={t.brandPlaceholder}
+              value={state.typography.content} 
+              onChange={(e) => onUpdateTypography({ content: e.target.value })}
+              className="bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-blue-600 transition-colors w-full resize-none shadow-inner text-slate-200 placeholder:text-slate-700"
+            />
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Font Family</label>
+              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{t.fontFamily}</label>
               <select 
                 value={state.typography.fontFamily} 
                 onChange={(e) => onUpdateTypography({ fontFamily: e.target.value })}
@@ -358,7 +424,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Base Size</label>
+              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{t.fontSize}</label>
               <input 
                 type="number" 
                 value={state.typography.fontSize} 
@@ -370,7 +436,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
           <div className="flex justify-between items-end gap-4">
             <div className="flex-1 flex flex-col gap-1.5">
-              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Color Hex</label>
+              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{t.colorHex}</label>
               <div className="flex items-center gap-3 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5">
                  <input 
                   type="color" 
@@ -387,6 +453,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   key={align}
                   onClick={() => onUpdateTypography({ align })}
                   className={`p-2 rounded-lg transition-all ${state.typography.align === align ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-800'}`}
+                  title={align === 'left' ? t.left : align === 'center' ? t.center : t.right}
                  >
                    {align === 'left' ? <AlignLeft className="w-4 h-4" /> : align === 'center' ? <AlignCenter className="w-4 h-4" /> : <AlignRight className="w-4 h-4" />}
                  </button>

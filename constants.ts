@@ -16,6 +16,7 @@ export const INITIAL_STATE: AppState = {
     tHold: 1.0,
     t5: 1.0,
     t6: 2.5,
+    t7: 1.0,
   },
   typography: {
     content: "MOMENTS IN MOTION\nCapturing the Essence of Light",
@@ -26,7 +27,9 @@ export const INITIAL_STATE: AppState = {
   },
   animation: {
     bounceScale: 1.08,
+    fadeColor: 'black',
   },
+  quality: 'standard',
 };
 
 export const TIMING_LABELS: Record<string, string> = {
@@ -36,7 +39,8 @@ export const TIMING_LABELS: Record<string, string> = {
   t4: 'Bounce Duration',
   tHold: 'Hold Before Overlay',
   t5: 'Overlay Fade',
-  t6: 'Static / Outro'
+  t6: 'Static / Outro',
+  t7: 'Final Fade Out'
 };
 
 export const FONTS = [

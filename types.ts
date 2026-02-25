@@ -7,6 +7,7 @@ export interface TimingConfig {
   tHold: number; // Hold Before Overlay
   t5: number; // Overlay Fade
   t6: number; // Static / Outro
+  t7: number; // Final Fade Out
 }
 
 export interface MediaSlotData {
@@ -16,6 +17,7 @@ export interface MediaSlotData {
   aspectRatio?: number; // width / height
   startTime: number; // For videos
   endTime?: number; // For videos, defaults to duration
+  duration?: number; // Total video duration
 }
 
 export interface TypographyConfig {
@@ -28,6 +30,7 @@ export interface TypographyConfig {
 
 export interface AnimationConfig {
   bounceScale: number;
+  fadeColor: 'black' | 'white';
 }
 
 export interface AppState {
@@ -40,4 +43,5 @@ export interface AppState {
   timing: TimingConfig;
   typography: TypographyConfig;
   animation: AnimationConfig;
+  quality: 'standard' | 'high';
 }

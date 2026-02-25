@@ -1,14 +1,22 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Settings, Play, Image as ImageIcon, Type, Clock, Save, Download, RotateCcw, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Settings, Play, Image as ImageIcon, Type, Clock, Save, Download, RotateCcw, Loader2, CheckCircle2, AlertTriangle, Zap } from 'lucide-react';
 import { AppState, TimingConfig, MediaSlotData, TypographyConfig, AnimationConfig } from './types';
 import { INITIAL_STATE, TIMING_LABELS } from './constants';
 import ControlPanel from './components/ControlPanel';
 import { Muxer, ArrayBufferTarget } from 'webm-muxer';
+import { Language, TRANSLATIONS } from './translations';
 
-const STORAGE_KEY = 'video_header_gen_v2';
+const STORAGE_KEY = 'video_header_gen_v3';
 
 const App: React.FC = () => {
+  const [lang, setLang] = useState<Language>(() => {
+    const saved = localStorage.getItem('app_lang');
+    return (saved as Language) || 'en';
+  });
+  
+  const t = TRANSLATIONS[lang];
+
   const [state, setState] = useState<AppState>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -33,6 +41,8 @@ const App: React.FC = () => {
   const [renderProgress, setRenderProgress] = useState(0);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
+  const [pendingQuality, setPendingQuality] = useState<'standard' | 'high' | null>(null);
+  const [lastRecordedQuality, setLastRecordedQuality] = useState<'standard' | 'high' | null>(null);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -41,7 +51,8 @@ const App: React.FC = () => {
   useEffect(() => {
     const { timing, typography, animation } = state;
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ timing, typography, animation }));
-  }, [state.timing, state.typography, state.animation]);
+    localStorage.setItem('app_lang', lang);
+  }, [state.timing, state.typography, state.animation, lang]);
 
   // Detect aspect ratios for media that don't have them
   useEffect(() => {
@@ -105,6 +116,26 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, animation: { ...prev.animation, ...animation } }));
   };
 
+  const handleUpdateQuality = (quality: 'standard' | 'high') => {
+    if (state.quality === quality) return;
+
+    if (recordedUrl) {
+      setPendingQuality(quality);
+    } else {
+      setState(prev => ({ ...prev, quality }));
+    }
+  };
+
+  const confirmQualityChange = () => {
+    if (pendingQuality) {
+      setState(prev => ({ ...prev, quality: pendingQuality }));
+      setRecordedUrl(null);
+      setRenderStatus('idle');
+      setRenderProgress(0);
+      setPendingQuality(null);
+    }
+  };
+
   const totalDuration = useMemo(() => {
     return (Object.values(state.timing) as number[]).reduce((acc, val) => acc + val, 0);
   }, [state.timing]);
@@ -144,14 +175,14 @@ const App: React.FC = () => {
   const startRecording = async () => {
     const canvas = canvasRef.current;
     if (!canvas) {
-      setRenderError("Preview canvas is not ready. Please refresh the page.");
+      setRenderError(t.canvasError);
       setRenderStatus('error');
       return;
     }
     
     // Check for WebCodecs support
     if (!window.VideoEncoder) {
-      setRenderError("Your browser does not support high-quality WebCodecs recording. Please use Chrome or Edge.");
+      setRenderError(t.browserWarning);
       setRenderStatus('error');
       return;
     }
@@ -161,6 +192,7 @@ const App: React.FC = () => {
     setRenderError(null);
     setRecordedUrl(null);
     setIsPlaying(true);
+    setLastRecordedQuality(state.quality);
     stopRequestedRef.current = false;
 
     let videoEncoder: VideoEncoder | undefined;
@@ -178,7 +210,10 @@ const App: React.FC = () => {
       const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
       if (!ctx) throw new Error("Canvas context failed");
 
-      const FPS = 30;
+      const isHighQuality = state.quality === 'high';
+      const FPS = isHighQuality ? 60 : 30;
+      const bitrate = isHighQuality ? 20_000_000 : 10_000_000;
+      
       const totalFrames = Math.ceil(totalDuration * FPS);
       const { timing, slots, typography, animation } = state;
 
@@ -205,7 +240,7 @@ const App: React.FC = () => {
         codec: 'vp09.00.10.08', // VP9 Profile 0, Level 1.0, 8-bit
         width: 1920,
         height: 1080,
-        bitrate: 10_000_000, // 10 Mbps
+        bitrate: bitrate,
         framerate: FPS,
         latencyMode: 'quality'
       });
@@ -264,8 +299,13 @@ const App: React.FC = () => {
         }
 
         const syncPromises = [];
-        if (slots.a.type === 'video') syncPromises.push(seekVideo(mediaA as HTMLVideoElement, slots.a.startTime, slots.a.endTime, t));
-        if (t >= timing.t1 + timing.t2) {
+        // Optimization: Only seek mediaA if it's visible (Intro + Transition)
+        if (slots.a.type === 'video' && t < timing.t1 + timing.t2) {
+          syncPromises.push(seekVideo(mediaA as HTMLVideoElement, slots.a.startTime, slots.a.endTime, t));
+        }
+        
+        // Optimization: Only seek panels if they are visible
+        if (t >= timing.t1) {
           const ct = t - (timing.t1 + timing.t2);
           if (slots.b.type === 'video') syncPromises.push(seekVideo(mediaB as HTMLVideoElement, slots.b.startTime, slots.b.endTime, ct));
           if (slots.c.type === 'video') syncPromises.push(seekVideo(mediaC as HTMLVideoElement, slots.c.startTime, slots.c.endTime, ct));
@@ -384,12 +424,21 @@ const App: React.FC = () => {
           }
         }
 
+        // Final Fade Out Feature
+        const fadeOutStartTime = totalDuration - timing.t7;
+        if (t > fadeOutStartTime) {
+          const fadeProgress = (t - fadeOutStartTime) / timing.t7;
+          ctx.save();
+          ctx.globalAlpha = Math.min(fadeProgress, 1);
+          ctx.fillStyle = animation.fadeColor === 'white' ? '#FFFFFF' : '#000000';
+          ctx.fillRect(0, 0, 1920, 1080);
+          ctx.restore();
+        }
+
         // Encode frame
-        const frameBitmap = await createImageBitmap(canvas);
-        const videoFrame = new VideoFrame(frameBitmap, { timestamp: (frame * 1000000) / FPS });
+        const videoFrame = new VideoFrame(canvas, { timestamp: (frame * 1000000) / FPS });
         videoEncoder.encode(videoFrame, { keyFrame: frame % 60 === 0 });
         videoFrame.close();
-        frameBitmap.close();
 
         await new Promise(r => requestAnimationFrame(r));
       }
@@ -449,12 +498,16 @@ const App: React.FC = () => {
     
     if (!canvasRef.current) {
       console.error("Canvas ref is null at togglePlayback");
-      setRenderError("Preview canvas is not ready. Please refresh or wait a moment.");
+      setRenderError(t.canvasError);
       setRenderStatus('error');
       return;
     }
 
     startRecording();
+  };
+
+  const toggleLang = () => {
+    setLang(prev => prev === 'en' ? 'zh' : 'en');
   };
 
   const downloadVideo = () => {
@@ -476,11 +529,20 @@ const App: React.FC = () => {
             <div className="p-1.5 bg-blue-500/10 rounded-lg">
               <Settings className="w-5 h-5 text-blue-400" />
             </div>
-            <h1 className="font-bold text-lg tracking-tight">Sync Video Gen</h1>
+            <h1 className="font-bold text-lg tracking-tight">{t.appTitle}</h1>
           </div>
-          <button onClick={() => setState(INITIAL_STATE)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">
-            <RotateCcw className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleLang}
+              className="px-2 py-1 rounded border border-slate-800 text-[9px] font-bold text-slate-500 hover:text-white hover:border-slate-600 transition-all uppercase tracking-widest"
+              title={lang === 'en' ? '切換至中文' : 'Switch to English'}
+            >
+              {lang === 'en' ? '中' : 'EN'}
+            </button>
+            <button onClick={() => setState(INITIAL_STATE)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Scrollable Content Area - Isolated Stacking Context */}
@@ -491,13 +553,17 @@ const App: React.FC = () => {
             onUpdateTiming={handleUpdateTiming}
             onUpdateTypography={handleUpdateTypography}
             onUpdateAnimation={handleUpdateAnimation}
+            onUpdateQuality={handleUpdateQuality}
+            hasRecording={!!recordedUrl}
+            lang={lang}
+            t={t}
           />
         </div>
 
         {/* Fixed Footer */}
         <div className="p-6 border-t border-slate-800 bg-slate-900 relative z-50 shadow-[0_-20px_40px_rgba(0,0,0,0.6)]">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-slate-400">Total Duration</span>
+            <span className="text-sm font-medium text-slate-400">{t.totalDuration}</span>
             <span className="text-lg font-bold text-blue-400 font-mono tracking-tighter">{totalDuration.toFixed(1)}s</span>
           </div>
           <div className="flex flex-col gap-3">
@@ -507,10 +573,10 @@ const App: React.FC = () => {
                 className="w-full py-3 px-4 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-xl flex items-center justify-center gap-2 border border-emerald-400/20"
               >
                 <Download className="w-5 h-5" />
-                Download Last Recording
+                {t.downloadVideo}
               </button>
             )}
-            <p className="text-[9px] text-slate-500 text-center uppercase font-bold tracking-[0.2em] opacity-50">Recording is automatic during preview</p>
+            <p className="text-[9px] text-slate-500 text-center uppercase font-bold tracking-[0.2em] opacity-50">{t.autoRecord}</p>
           </div>
         </div>
       </aside>
@@ -521,14 +587,14 @@ const App: React.FC = () => {
           <div className="absolute top-8 left-1/2 -translate-x-1/2 bg-red-500/95 text-white px-6 py-3 rounded-full flex items-center gap-3 z-[100] animate-bounce shadow-2xl">
             <AlertTriangle className="w-5 h-5" />
             <span className="font-bold text-sm">{renderError}</span>
-            <button onClick={() => setRenderStatus('idle')} className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-xs transition-colors">Dismiss</button>
+            <button onClick={() => setRenderStatus('idle')} className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-xs transition-colors">{t.dismiss}</button>
           </div>
         )}
         <div className="w-full max-w-5xl flex flex-col gap-8">
           <div className="flex items-center justify-between px-2">
             <div>
-              <h2 className="text-xl font-bold tracking-tight">Real-time Preview</h2>
-              <p className="text-slate-500 text-xs font-medium mt-1 uppercase tracking-widest opacity-60">Visual synchronization feedback</p>
+              <h2 className="text-xl font-bold tracking-tight">{t.realTimePreview}</h2>
+              <p className="text-slate-500 text-xs font-medium mt-1 uppercase tracking-widest opacity-60">{t.visualSync}</p>
             </div>
             <button 
               onClick={togglePlayback}
@@ -539,22 +605,29 @@ const App: React.FC = () => {
               }`}
             >
               {isPlaying ? <RotateCcw className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current" />}
-              {isPlaying ? `Stop Preview (${Math.round(renderProgress)}%)` : 'Preview & Record Sequence'}
+              {isPlaying ? `${t.stopPreview} (${Math.round(renderProgress)}%)` : t.previewRecord}
             </button>
           </div>
-          <div key="canvas-container" className="aspect-video w-full bg-[#000000] rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)] border border-slate-800/50 relative flex items-center justify-center">
-            <canvas 
-              key="main-preview-canvas"
-              ref={canvasRef} 
-              width="1920" 
-              height="1080" 
-              className="w-full h-full object-contain"
-            />
+            {/* Main Preview Area */}
+            <div key="canvas-container" className="aspect-video w-full bg-[#000000] rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)] border border-slate-800/50 relative flex items-center justify-center">
+              {/* Quality Change Hint */}
+              {!isPlaying && !recordedUrl && renderStatus === 'idle' && lastRecordedQuality !== null && state.quality !== lastRecordedQuality && (
+                <div className="absolute top-4 right-4 z-[60] bg-blue-600/90 backdrop-blur-md text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-xl border border-blue-400/30 animate-in fade-in slide-in-from-top-2">
+                  {t.qualityChanged}
+                </div>
+              )}
+              <canvas 
+                key="main-preview-canvas"
+                ref={canvasRef} 
+                width="1920" 
+                height="1080" 
+                className="w-full h-full object-contain"
+              />
             {!isPlaying && !recordedUrl && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
                  <div className="bg-slate-950 border border-slate-800 p-6 rounded-2xl shadow-2xl text-center">
-                   <div className="text-blue-400 font-bold mb-1 uppercase tracking-widest">Engine Ready</div>
-                   <div className="text-slate-500 text-xs">Click Preview & Record to start</div>
+                   <div className="text-blue-400 font-bold mb-1 uppercase tracking-widest">{t.engineReady}</div>
+                   <div className="text-slate-500 text-xs">{t.clickToStart}</div>
                  </div>
               </div>
             )}
@@ -565,22 +638,51 @@ const App: React.FC = () => {
                      <CheckCircle2 className="w-6 h-6 text-emerald-400" />
                    </div>
                    <div>
-                     <div className="text-white font-bold text-lg">Recording Finished!</div>
-                     <div className="text-slate-400 text-sm">Your high-quality WebM is ready for download.</div>
+                     <div className="text-white font-bold text-lg">{t.completed}</div>
+                     <div className="text-slate-400 text-sm">{t.videoReady}</div>
                    </div>
                    <button 
                     onClick={downloadVideo}
                     className="mt-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full font-bold transition-all flex items-center gap-2 shadow-lg"
-                   >
-                     <Download className="w-4 h-4" />
-                     Download Video
-                   </button>
+                  >
+                    <Download className="w-4 h-4" />
+                    {t.downloadVideo}
+                  </button>
                  </div>
               </div>
             )}
           </div>
         </div>
       </main>
+
+      {/* Global Quality Confirmation Modal - Highest Z-Index */}
+      {pendingQuality && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-[0_0_100px_rgba(0,0,0,0.8)] max-w-sm w-full animate-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6">
+              <Zap className="w-6 h-6 text-blue-400" />
+            </div>
+            <h4 className="text-white font-bold text-xl mb-3">{t.confirmQualityChange}</h4>
+            <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+              {t.qualityChangeWarning}
+            </p>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setPendingQuality(null)}
+                className="flex-1 py-3 rounded-2xl font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all active:scale-95"
+              >
+                {t.cancel}
+              </button>
+              <button 
+                onClick={confirmQualityChange}
+                className="flex-1 py-3 rounded-2xl font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-lg shadow-blue-900/20 active:scale-95"
+              >
+                {t.confirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
