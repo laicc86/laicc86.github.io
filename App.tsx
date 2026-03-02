@@ -258,7 +258,7 @@ const App: React.FC = () => {
       const dimsC = getMediaDims(mediaC, slots.c.type);
       const dimsD = getMediaDims(mediaD, slots.d.type);
 
-      const seekVideo = (video: HTMLVideoElement, startTime: number, endTime: number | undefined, elapsed: number) => {
+      const seekVideo = (video: HTMLVideoElement, startTime: number, endTime: number | undefined, loop: boolean | undefined, elapsed: number) => {
         return new Promise<void>((resolve) => {
           let effectiveEndTime = endTime || video.duration;
           
@@ -271,7 +271,11 @@ const App: React.FC = () => {
           let targetTime = startTime;
           
           if (segmentDuration > 0) {
-            targetTime = startTime + (elapsed % segmentDuration);
+            if (loop !== false) {
+              targetTime = startTime + (elapsed % segmentDuration);
+            } else {
+              targetTime = Math.min(startTime + elapsed, effectiveEndTime);
+            }
           }
 
           if (Math.abs(video.currentTime - targetTime) < 0.01) {
@@ -301,15 +305,15 @@ const App: React.FC = () => {
         const syncPromises = [];
         // Optimization: Only seek mediaA if it's visible (Intro + Transition)
         if (slots.a.type === 'video' && t < timing.t1 + timing.t2) {
-          syncPromises.push(seekVideo(mediaA as HTMLVideoElement, slots.a.startTime, slots.a.endTime, t));
+          syncPromises.push(seekVideo(mediaA as HTMLVideoElement, slots.a.startTime, slots.a.endTime, slots.a.loop, t));
         }
         
         // Optimization: Only seek panels if they are visible
         if (t >= timing.t1) {
           const ct = t - (timing.t1 + timing.t2);
-          if (slots.b.type === 'video') syncPromises.push(seekVideo(mediaB as HTMLVideoElement, slots.b.startTime, slots.b.endTime, ct));
-          if (slots.c.type === 'video') syncPromises.push(seekVideo(mediaC as HTMLVideoElement, slots.c.startTime, slots.c.endTime, ct));
-          if (slots.d.type === 'video') syncPromises.push(seekVideo(mediaD as HTMLVideoElement, slots.d.startTime, slots.d.endTime, ct));
+          if (slots.b.type === 'video') syncPromises.push(seekVideo(mediaB as HTMLVideoElement, slots.b.startTime, slots.b.endTime, slots.b.loop, ct));
+          if (slots.c.type === 'video') syncPromises.push(seekVideo(mediaC as HTMLVideoElement, slots.c.startTime, slots.c.endTime, slots.c.loop, ct));
+          if (slots.d.type === 'video') syncPromises.push(seekVideo(mediaD as HTMLVideoElement, slots.d.startTime, slots.d.endTime, slots.d.loop, ct));
         }
         await Promise.all(syncPromises);
 

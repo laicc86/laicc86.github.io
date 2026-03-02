@@ -265,6 +265,17 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
               {state.slots[slotId].type === 'video' && (
                   <div className="flex flex-col gap-3 mt-1 bg-slate-800/20 p-3 rounded-xl border border-slate-800/50">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={state.slots[slotId].loop !== false} 
+                        onChange={(e) => onUpdateSlots(slotId, { loop: e.target.checked })}
+                        className="w-3 h-3 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900"
+                      />
+                      {t.loopVideo || "Loop Video"}
+                    </label>
+                  </div>
                   <div className="flex flex-col gap-1.5">
                     <div className="flex justify-between items-center">
                       <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{t.startTime}</label>

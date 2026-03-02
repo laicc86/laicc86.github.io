@@ -18,6 +18,7 @@ export interface MediaSlotData {
   startTime: number; // For videos
   endTime?: number; // For videos, defaults to duration
   duration?: number; // Total video duration
+  loop?: boolean; // Whether the video should loop
 }
 
 export interface TypographyConfig {
