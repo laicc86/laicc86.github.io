@@ -32,6 +32,14 @@ export interface TypographyConfig {
 export interface AnimationConfig {
   bounceScale: number;
   fadeColor: 'black' | 'white';
+  entryType: 'default' | 'sequential' | 'staggered';
+}
+
+export interface IntroTypographyConfig extends TypographyConfig {
+  enabled: boolean;
+  startTime: number;
+  endTime: number;
+  fadeDuration: number;
 }
 
 export interface AppState {
@@ -43,6 +51,7 @@ export interface AppState {
   };
   timing: TimingConfig;
   typography: TypographyConfig;
+  introTypography: IntroTypographyConfig;
   animation: AnimationConfig;
   quality: 'standard' | 'high';
 }

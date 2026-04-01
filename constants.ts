@@ -25,9 +25,21 @@ export const INITIAL_STATE: AppState = {
     align: 'center',
     fontFamily: 'Inter',
   },
+  introTypography: {
+    enabled: true,
+    content: "A NEW PERSPECTIVE",
+    fontSize: 48,
+    color: "#FFFFFF",
+    align: 'center',
+    fontFamily: 'Inter',
+    startTime: 0.5,
+    endTime: 2.0,
+    fadeDuration: 0.5,
+  },
   animation: {
     bounceScale: 1.08,
     fadeColor: 'black',
+    entryType: 'default',
   },
   quality: 'standard',
 };

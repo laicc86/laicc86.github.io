@@ -63,7 +63,14 @@ export const TRANSLATIONS = {
     confirmQualityChange: "Change Quality?",
     qualityChangeWarning: "Changing quality will discard your current recording. Do you want to proceed?",
     confirm: "Confirm",
-    cancel: "Cancel"
+    cancel: "Cancel",
+    entryType: "Panel Entry Type",
+    defaultEntry: "Default (Mask Reveal)",
+    sequentialEntry: "Sequential (From Left)",
+    staggeredEntry: "Staggered (Cross Entry)",
+    introTypography: "Intro Typography",
+    enabled: "Enabled",
+    fadeDuration: "Fade Duration"
   },
   zh: {
     appTitle: "動態影片標頭產生器",
@@ -126,6 +133,13 @@ export const TRANSLATIONS = {
     confirmQualityChange: "確認更改畫質？",
     qualityChangeWarning: "更改畫質將會捨棄目前的錄製成品。您確定要繼續嗎？",
     confirm: "確認",
-    cancel: "取消"
+    cancel: "取消",
+    entryType: "面板進場方式",
+    defaultEntry: "預設 (遮罩顯現)",
+    sequentialEntry: "依序 (從左側進場)",
+    staggeredEntry: "橫式交叉 (交錯進場)",
+    introTypography: "開場文字顯示",
+    enabled: "啟用",
+    fadeDuration: "淡入淡出時長"
   }
 };

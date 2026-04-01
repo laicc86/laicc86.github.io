@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Settings, Play, Image as ImageIcon, Type, Clock, Save, Download, RotateCcw, Loader2, CheckCircle2, AlertTriangle, Zap } from 'lucide-react';
-import { AppState, TimingConfig, MediaSlotData, TypographyConfig, AnimationConfig } from './types';
+import { AppState, TimingConfig, MediaSlotData, TypographyConfig, IntroTypographyConfig, AnimationConfig } from './types';
 import { INITIAL_STATE, TIMING_LABELS } from './constants';
 import ControlPanel from './components/ControlPanel';
 import { Muxer, ArrayBufferTarget } from 'webm-muxer';
@@ -114,6 +114,10 @@ const App: React.FC = () => {
 
   const handleUpdateAnimation = (animation: Partial<AnimationConfig>) => {
     setState(prev => ({ ...prev, animation: { ...prev.animation, ...animation } }));
+  };
+
+  const handleUpdateIntroTypography = (introTypography: Partial<IntroTypographyConfig>) => {
+    setState(prev => ({ ...prev, introTypography: { ...prev.introTypography, ...introTypography } }));
   };
 
   const handleUpdateQuality = (quality: 'standard' | 'high') => {
@@ -258,6 +262,24 @@ const App: React.FC = () => {
       const dimsC = getMediaDims(mediaC, slots.c.type);
       const dimsD = getMediaDims(mediaD, slots.d.type);
 
+      const drawTypography = (config: TypographyConfig, opacity: number) => {
+        ctx.save();
+        ctx.globalAlpha = opacity;
+        ctx.fillStyle = config.color;
+        ctx.font = `bold ${config.fontSize * 1.5}px ${config.fontFamily}`;
+        ctx.textAlign = config.align as CanvasTextAlign;
+        ctx.textBaseline = 'middle';
+        const lines = config.content.split('\n');
+        const lineHeight = config.fontSize * 1.5;
+        const totalTextHeight = lines.length * lineHeight;
+        const startY = 540 - (totalTextHeight / 2) + (lineHeight / 2);
+        lines.forEach((line, i) => {
+          const x = config.align === 'center' ? 960 : config.align === 'left' ? 200 : 1720;
+          ctx.fillText(line, x, startY + (i * lineHeight));
+        });
+        ctx.restore();
+      };
+
       const seekVideo = (video: HTMLVideoElement, startTime: number, endTime: number | undefined, loop: boolean | undefined, elapsed: number) => {
         return new Promise<void>((resolve) => {
           let effectiveEndTime = endTime || video.duration;
@@ -345,7 +367,7 @@ const App: React.FC = () => {
         if (t >= timing.t1 + timing.t2) {
           const ct = t - (timing.t1 + timing.t2);
           const panelWidth = 1920 / 3;
-
+          
           const drawPanel = (
             media: HTMLImageElement | HTMLVideoElement, 
             index: number, 
@@ -353,7 +375,9 @@ const App: React.FC = () => {
             yOff: number, 
             scale: number, 
             type: 'image' | 'video',
-            dims: { w: number, h: number }
+            dims: { w: number, h: number },
+            xTranslate: number = 0,
+            yTranslate: number = 0
           ) => {
             const mediaAspect = dims.w / dims.h;
             const panelAspect = panelWidth / 1080;
@@ -368,12 +392,12 @@ const App: React.FC = () => {
             }
 
             const overflowX = drawW - panelWidth;
-            const imgTargetX = (index * panelWidth) - (overflowX * (xOff / 100));
-            const imgTargetY = (1080 - drawH) / 2 + yOff;
+            const imgTargetX = (index * panelWidth) - (overflowX * (xOff / 100)) + xTranslate;
+            const imgTargetY = (1080 - drawH) / 2 + yOff + yTranslate;
 
             ctx.save();
             ctx.beginPath();
-            ctx.rect(index * panelWidth, 0, panelWidth, 1080);
+            ctx.rect(index * panelWidth + xTranslate, yTranslate, panelWidth, 1080);
             ctx.clip();
             ctx.drawImage(media as any, imgTargetX, imgTargetY, drawW, drawH);
             ctx.restore();
@@ -390,42 +414,70 @@ const App: React.FC = () => {
           ctx.globalAlpha = 1;
           if (ct < timing.t3) {
             const ease = 1 - Math.pow(1 - entryProgress, 3);
-            drawPanel(mediaB, 0, slots.b.xOffset, 0, 1, slots.b.type, dimsB);
-            drawPanel(mediaC, 1, slots.c.xOffset, 0, 1, slots.c.type, dimsC);
-            drawPanel(mediaD, 2, slots.d.xOffset, 0, 1, slots.d.type, dimsD);
             
-            ctx.fillStyle = '#000000';
-            const offset = panelWidth * (1 - ease);
-            ctx.fillRect(0, 0, offset, 1080);
-            ctx.fillRect(panelWidth, 0, panelWidth, 1080 * (1 - ease));
-            ctx.fillRect(1920 - offset, 0, offset, 1080);
+            if (animation.entryType === 'sequential') {
+              const stagger = 0.15;
+              const durationPerPanel = timing.t3 - (stagger * 2);
+              const getPanelEase = (index: number) => {
+                const start = index * stagger;
+                const pProgress = Math.max(0, Math.min((ct - start) / durationPerPanel, 1));
+                return 1 - Math.pow(1 - pProgress, 3);
+              };
+              
+              const easeB = getPanelEase(0);
+              const easeC = getPanelEase(1);
+              const easeD = getPanelEase(2);
+              
+              drawPanel(mediaB, 0, slots.b.xOffset, 0, 1, slots.b.type, dimsB, -panelWidth * (1 - easeB));
+              drawPanel(mediaC, 1, slots.c.xOffset, 0, 1, slots.c.type, dimsC, -panelWidth * 2 * (1 - easeC));
+              drawPanel(mediaD, 2, slots.d.xOffset, 0, 1, slots.d.type, dimsD, -panelWidth * 3 * (1 - easeD));
+            } else if (animation.entryType === 'staggered') {
+              const ease = 1 - Math.pow(1 - entryProgress, 3);
+              drawPanel(mediaB, 0, slots.b.xOffset, 0, 1, slots.b.type, dimsB, -panelWidth * (1 - ease));
+              drawPanel(mediaC, 1, slots.c.xOffset, 0, 1, slots.c.type, dimsC, (1920 - panelWidth) * (1 - ease));
+              drawPanel(mediaD, 2, slots.d.xOffset, 0, 1, slots.d.type, dimsD, -1920 * (1 - ease));
+            } else {
+              drawPanel(mediaB, 0, slots.b.xOffset, 0, 1, slots.b.type, dimsB);
+              drawPanel(mediaC, 1, slots.c.xOffset, 0, 1, slots.c.type, dimsC);
+              drawPanel(mediaD, 2, slots.d.xOffset, 0, 1, slots.d.type, dimsD);
+              
+              ctx.fillStyle = '#000000';
+              const offset = panelWidth * (1 - ease);
+              ctx.fillRect(0, 0, offset, 1080);
+              ctx.fillRect(panelWidth, 0, panelWidth, 1080 * (1 - ease));
+              ctx.fillRect(1920 - offset, 0, offset, 1080);
+            }
           } else {
             drawPanel(mediaB, 0, slots.b.xOffset, 0, getBounce(0), slots.b.type, dimsB);
             drawPanel(mediaC, 1, slots.c.xOffset, 0, getBounce(timing.t4/3), slots.c.type, dimsC);
             drawPanel(mediaD, 2, slots.d.xOffset, 0, getBounce((timing.t4/3)*2), slots.d.type, dimsD);
           }
-
+          
           const ot = ct - timing.t3 - timing.t4 - timing.tHold;
           if (ot > 0) {
             const overlayOpacity = Math.min(ot / timing.t5, 1);
             ctx.save();
             ctx.fillStyle = `rgba(0,0,0,${overlayOpacity * 0.4})`;
             ctx.fillRect(0,0,1920,1080);
-            ctx.globalAlpha = overlayOpacity;
-            ctx.fillStyle = typography.color;
-            ctx.font = `bold ${typography.fontSize * 1.5}px ${typography.fontFamily}`;
-            ctx.textAlign = typography.align as CanvasTextAlign;
-            ctx.textBaseline = 'middle';
-            const lines = typography.content.split('\n');
-            const lineHeight = typography.fontSize * 1.5;
-            const totalTextHeight = lines.length * lineHeight;
-            const startY = 540 - (totalTextHeight / 2) + (lineHeight / 2);
-            lines.forEach((line, i) => {
-              const x = typography.align === 'center' ? 960 : typography.align === 'left' ? 200 : 1720;
-              ctx.fillText(line, x, startY + (i * lineHeight));
-            });
             ctx.restore();
+            drawTypography(typography, overlayOpacity);
           }
+        }
+
+        // Intro Typography (Drawn after panels to stay visible)
+        const { introTypography } = state;
+        if (introTypography.enabled && t >= introTypography.startTime && t <= introTypography.endTime) {
+          let introOpacity = 1;
+          const elapsed = t - introTypography.startTime;
+          const remaining = introTypography.endTime - t;
+          
+          if (elapsed < introTypography.fadeDuration) {
+            introOpacity = elapsed / introTypography.fadeDuration;
+          } else if (remaining < introTypography.fadeDuration) {
+            introOpacity = remaining / introTypography.fadeDuration;
+          }
+          
+          drawTypography(introTypography, introOpacity);
         }
 
         // Final Fade Out Feature
@@ -557,6 +609,7 @@ const App: React.FC = () => {
             onUpdateTiming={handleUpdateTiming}
             onUpdateTypography={handleUpdateTypography}
             onUpdateAnimation={handleUpdateAnimation}
+            onUpdateIntroTypography={handleUpdateIntroTypography}
             onUpdateQuality={handleUpdateQuality}
             hasRecording={!!recordedUrl}
             lang={lang}
