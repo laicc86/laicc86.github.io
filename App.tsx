@@ -26,6 +26,7 @@ const App: React.FC = () => {
           ...INITIAL_STATE,
           timing: parsed.timing || INITIAL_STATE.timing,
           typography: parsed.typography || INITIAL_STATE.typography,
+          introTypography: parsed.introTypography || INITIAL_STATE.introTypography,
           animation: parsed.animation || INITIAL_STATE.animation,
         };
       } catch (e) {
@@ -49,10 +50,10 @@ const App: React.FC = () => {
   const stopRequestedRef = useRef(false);
 
   useEffect(() => {
-    const { timing, typography, animation } = state;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ timing, typography, animation }));
+    const { timing, typography, introTypography, animation } = state;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ timing, typography, introTypography, animation }));
     localStorage.setItem('app_lang', lang);
-  }, [state.timing, state.typography, state.animation, lang]);
+  }, [state.timing, state.typography, state.introTypography, state.animation, lang]);
 
   // Detect aspect ratios for media that don't have them
   useEffect(() => {
