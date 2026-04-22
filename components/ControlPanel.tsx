@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, memo } from 'react';
 import { ImageIcon, Clock, Type, Crop, AlignLeft, AlignCenter, AlignRight, Zap, MousePointer2 } from 'lucide-react';
 import { AppState, TimingConfig, MediaSlotData, TypographyConfig, IntroTypographyConfig, AnimationConfig } from '../types';
 import { FONTS, TIMING_LABELS } from '../constants';
@@ -155,7 +155,7 @@ interface ControlPanelProps {
   t: any;
 }
 
-const ControlPanel: React.FC<ControlPanelProps> = ({ 
+const ControlPanel: React.FC<ControlPanelProps> = memo(({ 
   state, 
   onUpdateSlots, 
   onUpdateTiming, 
@@ -634,6 +634,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       </section>
     </div>
   );
-};
+});
 
 export default ControlPanel;

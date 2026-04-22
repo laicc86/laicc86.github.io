@@ -70,7 +70,11 @@ export const TRANSLATIONS = {
     staggeredEntry: "Staggered (Cross Entry)",
     introTypography: "Intro Typography",
     enabled: "Enabled",
-    fadeDuration: "Fade Duration"
+    fadeDuration: "Fade Duration",
+    quickPreview: "Quick Preview (Fast)",
+    previewing: "Previewing...",
+    close: "Close",
+    previewRes: "Preview Resolution"
   },
   zh: {
     appTitle: "動態影片標頭產生器",
@@ -140,6 +144,10 @@ export const TRANSLATIONS = {
     staggeredEntry: "橫式交叉 (交錯進場)",
     introTypography: "開場文字顯示",
     enabled: "啟用",
-    fadeDuration: "淡入淡出時長"
+    fadeDuration: "淡入淡出時長",
+    quickPreview: "快速製作預覽 (極速)",
+    previewing: "預覽中...",
+    close: "關閉",
+    previewRes: "預覽解析度"
   }
 };
