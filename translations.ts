@@ -4,10 +4,10 @@ export type Language = 'en' | 'zh';
 export const TRANSLATIONS = {
   en: {
     appTitle: "Dynamic Video Header Generator",
-    previewRecord: "Preview & Record Sequence",
+    previewRecord: "High-Quality Render",
     stopPreview: "Stop Preview",
     engineReady: "Engine Ready",
-    clickToStart: "Click Preview & Record to start",
+    clickToStart: "Click High-Quality Render to start",
     realTimePreview: "Real-time Preview",
     visualSync: "Visual synchronization feedback",
     timelineEngine: "Timeline Engine",
@@ -78,10 +78,10 @@ export const TRANSLATIONS = {
   },
   zh: {
     appTitle: "動態影片標頭產生器",
-    previewRecord: "預覽並錄製序列",
+    previewRecord: "高品質逐幀渲染",
     stopPreview: "停止預覽",
     engineReady: "引擎就緒",
-    clickToStart: "點擊預覽並錄製以開始",
+    clickToStart: "點擊高品質逐幀渲染以開始",
     realTimePreview: "即時預覽",
     visualSync: "視覺同步回饋",
     timelineEngine: "時間軸引擎",

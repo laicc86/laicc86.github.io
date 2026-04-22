@@ -40,7 +40,6 @@ const App: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isQuickPreviewing, setIsQuickPreviewing] = useState(false);
   const [quickPreviewProgress, setQuickPreivewProgress] = useState(0);
-  const [quickPreviewRes, setQuickPreviewRes] = useState<360 | 720 | 1080>(720);
   
   const [renderStatus, setRenderStatus] = useState<'idle' | 'rendering' | 'completed' | 'error'>('idle');
   const [renderProgress, setRenderProgress] = useState(0);
@@ -596,6 +595,7 @@ const App: React.FC = () => {
     
     setRenderProgress(0);
     setRenderError(null);
+    setRecordedUrl(null);
     setIsQuickPreviewing(true);
     setQuickPreivewProgress(0);
     stopRequestedRef.current = false;
@@ -632,6 +632,30 @@ const App: React.FC = () => {
 
       // Set smoothing off for faster low-res blitting
       ctx.imageSmoothingEnabled = false;
+
+      const previewFPS = state.quality === 'high' ? 60 : 30;
+
+      // Real-time Canvas Capture (Scheme A)
+      const stream = canvas.captureStream(previewFPS);
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') 
+        ? 'video/webm;codecs=vp9' 
+        : 'video/webm';
+      
+      const chunks: Blob[] = [];
+      const recorder = new MediaRecorder(stream, { 
+        mimeType,
+        videoBitsPerSecond: state.quality === 'high' ? 15_000_000 : 8_000_000 
+      });
+      
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+      
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        setRecordedUrl(url);
+      };
 
       const startTime = performance.now();
       let lastProgressUpdate = 0;
@@ -710,8 +734,8 @@ const App: React.FC = () => {
           state, 
           mediaMap, 
           dimsMap, 
-          quickPreviewRes === 1080 ? 1920 : quickPreviewRes === 720 ? 1280 : 640, 
-          quickPreviewRes === 1080 ? 1080 : quickPreviewRes === 720 ? 720 : 360
+          1920, 
+          1080
         );
         
         if (runningRef.current) {
@@ -720,9 +744,14 @@ const App: React.FC = () => {
       };
 
       requestAnimationFrame(renderLoop);
+      recorder.start();
       
       while (runningRef.current && !stopRequestedRef.current) {
         await new Promise(r => setTimeout(r, 100));
+      }
+
+      if (recorder.state !== 'inactive') {
+        recorder.stop();
       }
 
     } catch (err: any) {
@@ -823,26 +852,6 @@ const App: React.FC = () => {
             <span className="text-lg font-bold text-blue-400 font-mono tracking-tighter">{totalDuration.toFixed(1)}s</span>
           </div>
           <div className="flex flex-col gap-3">
-            <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
-              <button 
-                onClick={() => setQuickPreviewRes(1080)}
-                className={`flex-1 py-1.5 px-3 rounded-lg text-[10px] font-bold transition-all ${quickPreviewRes === 1080 ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
-              >
-                1080p
-              </button>
-              <button 
-                onClick={() => setQuickPreviewRes(720)}
-                className={`flex-1 py-1.5 px-3 rounded-lg text-[10px] font-bold transition-all ${quickPreviewRes === 720 ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
-              >
-                720p
-              </button>
-              <button 
-                onClick={() => setQuickPreviewRes(360)}
-                className={`flex-1 py-1.5 px-3 rounded-lg text-[10px] font-bold transition-all ${quickPreviewRes === 360 ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
-              >
-                360p
-              </button>
-            </div>
             <button 
               onClick={startQuickPreview}
               disabled={isPlaying || renderStatus === 'rendering'}
@@ -876,7 +885,13 @@ const App: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-white tracking-tight">{t.quickPreview}</h3>
-                    <p className="text-slate-400 text-sm font-medium uppercase tracking-[0.2em] opacity-70">{t.previewing} {Math.round(quickPreviewProgress)}%</p>
+                    <div className="flex items-center gap-3">
+                      <p className="text-slate-400 text-sm font-medium uppercase tracking-[0.2em] opacity-70">{t.previewing} {Math.round(quickPreviewProgress)}%</p>
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 bg-red-500/20 rounded-full border border-red-500/30 animate-pulse">
+                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                        <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">REC</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <button 
@@ -890,8 +905,8 @@ const App: React.FC = () => {
               <div className="aspect-video w-full bg-black rounded-[2.5rem] overflow-hidden shadow-[0_0_120px_rgba(79,70,229,0.3)] border border-indigo-500/30 ring-1 ring-white/10 relative">
                 <canvas 
                   ref={quickPreviewCanvasRef}
-                  width={quickPreviewRes === 1080 ? "1920" : quickPreviewRes === 720 ? "1280" : "640"}
-                  height={quickPreviewRes === 1080 ? "1080" : quickPreviewRes === 720 ? "720" : "360"}
+                  width="1920"
+                  height="1080"
                   className="w-full h-full object-contain"
                 />
                 <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-md px-10">
