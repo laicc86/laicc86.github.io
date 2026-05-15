@@ -62,4 +62,6 @@ export interface AppState {
   animation: AnimationConfig;
   quality: 'standard' | 'high';
   customFonts: CustomFont[];
+  layout: 'vertical' | 'slanted';
+  slantedWidth: number;
 }

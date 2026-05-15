@@ -160,6 +160,14 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, customFonts }));
   };
 
+  const handleUpdateLayout = (layout: 'vertical' | 'slanted') => {
+    setState(prev => ({ ...prev, layout }));
+  };
+  
+  const handleUpdateSlantedWidth = (slantedWidth: number) => {
+    setState(prev => ({ ...prev, slantedWidth }));
+  };
+
   const confirmQualityChange = () => {
     if (pendingQuality) {
       setState(prev => ({ ...prev, quality: pendingQuality }));
@@ -263,30 +271,62 @@ const App: React.FC = () => {
         index: number, 
         xOff: number, 
         yOff: number, 
-        scale: number, 
+        cScale: number, 
         pDims: { w: number, h: number },
         xTranslate: number = 0,
         yTranslate: number = 0
       ) => {
         const mediaAspect = pDims.w / pDims.h;
-        const panelAspect = panelWidth / canvasH;
+        const slantWidth = state.layout === 'slanted' ? state.slantedWidth * scale : 0;
+        
+        // Base dimensions must cover the slanted parallelogram if layout is slanted
+        const baseW = panelWidth + slantWidth;
+        const baseH = canvasH;
+        
+        const panelAspect = baseW / baseH;
         
         let dW, dH;
         if (mediaAspect > panelAspect) {
-          dH = canvasH * scale;
+          dH = baseH * cScale;
           dW = dH * mediaAspect;
         } else {
-          dW = panelWidth * scale;
+          dW = baseW * cScale;
           dH = dW / mediaAspect;
         }
 
-        const overflowX = dW - panelWidth;
-        const imgTargetX = (index * panelWidth) - (overflowX * (xOff / 100)) + xTranslate;
+        const overflowX = dW - baseW;
+        // imgTargetX needs to account for being centered within the (wider) slanted panel bounding box
+        const imgTargetX = (index * panelWidth - slantWidth / 2) - (overflowX * (xOff / 100)) + xTranslate;
         const imgTargetY = (canvasH - dH) / 2 + yOff + yTranslate;
 
         ctx.save();
         ctx.beginPath();
-        ctx.rect(index * panelWidth + xTranslate, yTranslate, panelWidth, canvasH);
+        
+        if (state.layout === 'slanted') {
+          // Fixed clipping path in canvas space with anti-aliasing bleed
+          const bleed = 2; 
+          
+          if (index === 0) {
+            ctx.moveTo(0, 0);
+            ctx.lineTo(panelWidth + slantWidth / 2 + bleed, 0);
+            ctx.lineTo(panelWidth - slantWidth / 2 + bleed, canvasH);
+            ctx.lineTo(0, canvasH);
+          } else if (index === 1) {
+            ctx.moveTo(panelWidth + slantWidth / 2 - bleed, 0);
+            ctx.lineTo(panelWidth * 2 + slantWidth / 2 + bleed, 0);
+            ctx.lineTo(panelWidth * 2 - slantWidth / 2 + bleed, canvasH);
+            ctx.lineTo(panelWidth - slantWidth / 2 - bleed, canvasH);
+          } else {
+            ctx.moveTo(panelWidth * 2 + slantWidth / 2 - bleed, 0);
+            ctx.lineTo(canvasW, 0);
+            ctx.lineTo(canvasW, canvasH);
+            ctx.lineTo(panelWidth * 2 - slantWidth / 2 - bleed, canvasH);
+          }
+        } else {
+          // Standard Vertical Clipping Path
+          ctx.rect(index * panelWidth, 0, panelWidth, canvasH);
+        }
+        
         ctx.clip();
         ctx.drawImage(el, imgTargetX, imgTargetY, dW, dH);
         ctx.restore();
@@ -322,16 +362,66 @@ const App: React.FC = () => {
           drawPanel(media.b, 0, slots.b.xOffset, 0, 1, dims.b);
           drawPanel(media.c, 1, slots.c.xOffset, 0, 1, dims.c);
           drawPanel(media.d, 2, slots.d.xOffset, 0, 1, dims.d);
+          
           ctx.fillStyle = '#000000';
           const offset = panelWidth * (1 - ease);
-          ctx.fillRect(0, 0, offset, canvasH);
-          ctx.fillRect(panelWidth, 0, panelWidth, canvasH * (1 - ease));
-          ctx.fillRect(canvasW - offset, 0, offset, canvasH);
+          
+          if (state.layout === 'slanted') {
+            const slantWidth = state.slantedWidth * scale;
+            
+            // Left mask
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(offset + slantWidth / 2, 0);
+            ctx.lineTo(offset - slantWidth / 2, canvasH);
+            ctx.lineTo(0, canvasH);
+            ctx.fill();
+            
+            // Middle mask (shaping from top-down)
+            const midH = canvasH * (1 - ease);
+            ctx.beginPath();
+            ctx.moveTo(panelWidth + slantWidth / 2, 0);
+            ctx.lineTo(panelWidth * 2 + slantWidth / 2, 0);
+            ctx.lineTo(panelWidth * 2 + slantWidth / 2 - (slantWidth * (midH / canvasH)), midH);
+            ctx.lineTo(panelWidth + slantWidth / 2 - (slantWidth * (midH / canvasH)), midH);
+            ctx.fill();
+            
+            // Right mask
+            ctx.beginPath();
+            ctx.moveTo(canvasW - offset + slantWidth / 2, 0);
+            ctx.lineTo(canvasW, 0);
+            ctx.lineTo(canvasW, canvasH);
+            ctx.lineTo(canvasW - offset - slantWidth / 2, canvasH);
+            ctx.fill();
+          } else {
+            ctx.fillRect(0, 0, offset, canvasH);
+            ctx.fillRect(panelWidth, 0, panelWidth, canvasH * (1 - ease));
+            ctx.fillRect(canvasW - offset, 0, offset, canvasH);
+          }
         }
       } else {
         drawPanel(media.b, 0, slots.b.xOffset, 0, getBounce(0), dims.b);
         drawPanel(media.c, 1, slots.c.xOffset, 0, getBounce(timing.t4/3), dims.c);
         drawPanel(media.d, 2, slots.d.xOffset, 0, getBounce((timing.t4/3)*2), dims.d);
+      }
+
+      // Draw Slanted Dividers
+      if (state.layout === 'slanted') {
+        const slantWidth = state.slantedWidth * scale;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 2 * scale;
+        
+        ctx.beginPath();
+        ctx.moveTo(panelWidth + slantWidth / 2, 0);
+        ctx.lineTo(panelWidth - slantWidth / 2, canvasH);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(panelWidth * 2 + slantWidth / 2, 0);
+        ctx.lineTo(panelWidth * 2 - slantWidth / 2, canvasH);
+        ctx.stroke();
+        ctx.restore();
       }
       
       const ot = ct - timing.t3 - timing.t4 - timing.tHold;
@@ -865,6 +955,8 @@ const App: React.FC = () => {
             onUpdateIntroTypography={handleUpdateIntroTypography}
             onUpdateQuality={handleUpdateQuality}
             onUpdateCustomFonts={handleUpdateCustomFonts}
+            onUpdateLayout={handleUpdateLayout}
+            onUpdateSlantedWidth={handleUpdateSlantedWidth}
             hasRecording={!!recordedUrl}
             lang={lang}
             t={t}

@@ -76,7 +76,11 @@ export const TRANSLATIONS = {
     close: "Close",
     previewRes: "Preview Resolution",
     uploadFont: "Upload Font (.ttf, .otf, .woff)",
-    customFonts: "Custom Fonts"
+    customFonts: "Custom Fonts",
+    layoutType: "Layout Design",
+    verticalSplit: "Vertical Split",
+    slantedSplit: "Slanted Split",
+    slantedWidth: "Slant Intensity"
   },
   zh: {
     appTitle: "動態影片標頭產生器",
@@ -152,6 +156,10 @@ export const TRANSLATIONS = {
     close: "關閉",
     previewRes: "預覽解析度",
     uploadFont: "上傳字型 (.ttf, .otf, .woff)",
-    customFonts: "自定義字型"
+    customFonts: "自定義字型",
+    layoutType: "佈局設定",
+    verticalSplit: "垂直三分割",
+    slantedSplit: "斜切三分割",
+    slantedWidth: "斜切幅度"
   }
 };

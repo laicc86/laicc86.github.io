@@ -151,6 +151,8 @@ interface ControlPanelProps {
   onUpdateIntroTypography: (introTypography: Partial<IntroTypographyConfig>) => void;
   onUpdateQuality: (quality: 'standard' | 'high') => void;
   onUpdateCustomFonts: (fonts: CustomFont[]) => void;
+  onUpdateLayout: (layout: 'vertical' | 'slanted') => void;
+  onUpdateSlantedWidth: (width: number) => void;
   hasRecording: boolean;
   lang: string;
   t: any;
@@ -165,6 +167,8 @@ const ControlPanel: React.FC<ControlPanelProps> = memo(({
   onUpdateIntroTypography,
   onUpdateQuality,
   onUpdateCustomFonts,
+  onUpdateLayout,
+  onUpdateSlantedWidth,
   hasRecording,
   lang,
   t
@@ -243,6 +247,45 @@ const ControlPanel: React.FC<ControlPanelProps> = memo(({
           <ImageIcon className="w-4 h-4 text-blue-400" />
           <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-500">{t.mediaSlots}</h3>
         </div>
+
+        {/* Layout Selector */}
+        <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 mb-6 font-bold shadow-inner">
+          <button 
+            onClick={() => onUpdateLayout('vertical')}
+            className={`flex-1 py-2 px-3 rounded-lg text-[10px] uppercase tracking-widest transition-all ${state.layout === 'vertical' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+          >
+            {t.verticalSplit}
+          </button>
+          <button 
+            onClick={() => onUpdateLayout('slanted')}
+            className={`flex-1 py-2 px-3 rounded-lg text-[10px] uppercase tracking-widest transition-all ${state.layout === 'slanted' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+          >
+            {t.slantedSplit}
+          </button>
+        </div>
+
+        {state.layout === 'slanted' && (
+          <div className="mb-8 p-4 bg-slate-950 rounded-2xl border border-slate-800 shadow-inner">
+             <div className="flex justify-between items-center mb-3 px-1">
+               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.slantedWidth}</span>
+               <span className="text-[10px] font-mono text-blue-400 font-bold bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">{state.slantedWidth}px</span>
+             </div>
+             <input 
+               type="range" 
+               min="0" 
+               max="400" 
+               step="10"
+               value={state.slantedWidth}
+               onChange={(e) => onUpdateSlantedWidth(Number(e.target.value))}
+               className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500 hover:accent-blue-400 transition-all"
+             />
+             <div className="flex justify-between mt-2 px-1">
+               <span className="text-[8px] font-mono text-slate-600 uppercase tracking-tighter">Vertical</span>
+               <span className="text-[8px] font-mono text-slate-600 uppercase tracking-tighter">Extreme slant</span>
+             </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-8">
           {(['a', 'b', 'c', 'd'] as const).map(slotId => (
             <div key={slotId} className="flex flex-col gap-3 group/slot">

@@ -43,6 +43,8 @@ export const INITIAL_STATE: AppState = {
   },
   quality: 'standard',
   customFonts: [],
+  layout: 'vertical',
+  slantedWidth: 150,
 };
 
 export const TIMING_LABELS: Record<string, string> = {
