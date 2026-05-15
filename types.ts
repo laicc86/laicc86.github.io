@@ -42,6 +42,13 @@ export interface IntroTypographyConfig extends TypographyConfig {
   fadeDuration: number;
 }
 
+export interface CustomFont {
+  id: string;
+  name: string;
+  family: string;
+  url: string;
+}
+
 export interface AppState {
   slots: {
     a: MediaSlotData;
@@ -54,4 +61,5 @@ export interface AppState {
   introTypography: IntroTypographyConfig;
   animation: AnimationConfig;
   quality: 'standard' | 'high';
+  customFonts: CustomFont[];
 }

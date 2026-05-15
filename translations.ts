@@ -74,7 +74,9 @@ export const TRANSLATIONS = {
     quickPreview: "Quick Preview (Fast)",
     previewing: "Previewing...",
     close: "Close",
-    previewRes: "Preview Resolution"
+    previewRes: "Preview Resolution",
+    uploadFont: "Upload Font (.ttf, .otf, .woff)",
+    customFonts: "Custom Fonts"
   },
   zh: {
     appTitle: "動態影片標頭產生器",
@@ -148,6 +150,8 @@ export const TRANSLATIONS = {
     quickPreview: "快速製作預覽 (極速)",
     previewing: "預覽中...",
     close: "關閉",
-    previewRes: "預覽解析度"
+    previewRes: "預覽解析度",
+    uploadFont: "上傳字型 (.ttf, .otf, .woff)",
+    customFonts: "自定義字型"
   }
 };

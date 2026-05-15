@@ -42,6 +42,7 @@ export const INITIAL_STATE: AppState = {
     entryType: 'default',
   },
   quality: 'standard',
+  customFonts: [],
 };
 
 export const TIMING_LABELS: Record<string, string> = {

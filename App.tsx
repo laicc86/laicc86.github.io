@@ -29,6 +29,7 @@ const App: React.FC = () => {
           typography: parsed.typography || INITIAL_STATE.typography,
           introTypography: parsed.introTypography || INITIAL_STATE.introTypography,
           animation: parsed.animation || INITIAL_STATE.animation,
+          customFonts: parsed.customFonts || INITIAL_STATE.customFonts,
         };
       } catch (e) {
         console.error("Failed to parse saved state", e);
@@ -46,6 +47,22 @@ const App: React.FC = () => {
   const [renderError, setRenderError] = useState<string | null>(null);
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
   const [pendingQuality, setPendingQuality] = useState<'standard' | 'high' | null>(null);
+  
+  useEffect(() => {
+    const styleId = 'uploaded-fonts-style';
+    let styleTag = document.getElementById(styleId) as HTMLStyleElement;
+    if (!styleTag) {
+      styleTag = document.createElement('style');
+      styleTag.id = styleId;
+      document.head.appendChild(styleTag);
+    }
+
+    const css = (state.customFonts || [])
+      .map(font => `@font-face { font-family: "${font.family}"; src: url("${font.url}"); }`)
+      .join('\n');
+    styleTag.textContent = css;
+  }, [state.customFonts]);
+
   const [lastRecordedQuality, setLastRecordedQuality] = useState<'standard' | 'high' | null>(null);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -54,10 +71,14 @@ const App: React.FC = () => {
   const stopRequestedRef = useRef(false);
 
   useEffect(() => {
-    const { timing, slots, typography, introTypography, animation } = state;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ timing, slots, typography, introTypography, animation }));
-    localStorage.setItem('app_lang', lang);
-  }, [state.timing, state.slots, state.typography, state.introTypography, state.animation, lang]);
+    const { timing, slots, typography, introTypography, animation, customFonts } = state;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ timing, slots, typography, introTypography, animation, customFonts }));
+      localStorage.setItem('app_lang', lang);
+    } catch (e) {
+      console.warn("Storage limits exceeded. Some settings or fonts might not be saved.", e);
+    }
+  }, [state.timing, state.slots, state.typography, state.introTypography, state.animation, state.customFonts, lang]);
 
   // Detect aspect ratios for media that don't have them
   useEffect(() => {
@@ -133,6 +154,10 @@ const App: React.FC = () => {
     } else {
       setState(prev => ({ ...prev, quality }));
     }
+  };
+
+  const handleUpdateCustomFonts = (customFonts: any[]) => {
+    setState(prev => ({ ...prev, customFonts }));
   };
 
   const confirmQualityChange = () => {
@@ -839,6 +864,7 @@ const App: React.FC = () => {
             onUpdateAnimation={handleUpdateAnimation}
             onUpdateIntroTypography={handleUpdateIntroTypography}
             onUpdateQuality={handleUpdateQuality}
+            onUpdateCustomFonts={handleUpdateCustomFonts}
             hasRecording={!!recordedUrl}
             lang={lang}
             t={t}

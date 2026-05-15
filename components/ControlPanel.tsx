@@ -1,7 +1,7 @@
 
 import React, { useRef, memo } from 'react';
-import { ImageIcon, Clock, Type, Crop, AlignLeft, AlignCenter, AlignRight, Zap, MousePointer2 } from 'lucide-react';
-import { AppState, TimingConfig, MediaSlotData, TypographyConfig, IntroTypographyConfig, AnimationConfig } from '../types';
+import { ImageIcon, Clock, Type, Crop, AlignLeft, AlignCenter, AlignRight, Zap, MousePointer2, Upload, Trash2 } from 'lucide-react';
+import { AppState, TimingConfig, MediaSlotData, TypographyConfig, IntroTypographyConfig, AnimationConfig, CustomFont } from '../types';
 import { FONTS, TIMING_LABELS } from '../constants';
 
 interface MediaCropSelectorProps {
@@ -150,6 +150,7 @@ interface ControlPanelProps {
   onUpdateAnimation: (animation: Partial<AnimationConfig>) => void;
   onUpdateIntroTypography: (introTypography: Partial<IntroTypographyConfig>) => void;
   onUpdateQuality: (quality: 'standard' | 'high') => void;
+  onUpdateCustomFonts: (fonts: CustomFont[]) => void;
   hasRecording: boolean;
   lang: string;
   t: any;
@@ -163,12 +164,79 @@ const ControlPanel: React.FC<ControlPanelProps> = memo(({
   onUpdateAnimation,
   onUpdateIntroTypography,
   onUpdateQuality,
+  onUpdateCustomFonts,
   hasRecording,
   lang,
   t
 }) => {
+  const handleFontUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const url = event.target?.result as string;
+      const familyName = file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
+      const newFont: CustomFont = {
+        id: crypto.randomUUID(),
+        name: file.name,
+        family: familyName,
+        url: url
+      };
+      onUpdateCustomFonts([...(state.customFonts || []), newFont]);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const removeFont = (id: string) => {
+    onUpdateCustomFonts(state.customFonts.filter(f => f.id !== id));
+  };
+
+  const fontOptions = [...FONTS, ...(state.customFonts || []).map(f => f.family)];
+
   return (
     <div className="flex flex-col gap-10 p-6">
+      {/* Custom Fonts Management */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Upload className="w-4 h-4 text-pink-400" />
+          <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-500">{t.customFonts || "Custom Fonts"}</h3>
+        </div>
+        <div className="flex flex-col gap-4 bg-slate-800/20 p-4 rounded-2xl border border-slate-800/50">
+          <div className="flex flex-col gap-3">
+            {(state.customFonts || []).map(font => (
+              <div key={font.id} className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800 group">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-300">{font.name}</span>
+                  <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest">{font.family}</span>
+                </div>
+                <button 
+                  onClick={() => removeFont(font.id)}
+                  className="p-1.5 hover:bg-red-500/10 hover:text-red-500 text-slate-600 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <input 
+            type="file" 
+            id="font-upload" 
+            className="hidden" 
+            accept=".ttf,.otf,.woff,.woff2"
+            onChange={handleFontUpload}
+          />
+          <label 
+            htmlFor="font-upload"
+            className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl border-2 border-dashed border-slate-800 hover:border-pink-500/50 hover:bg-pink-500/5 text-slate-500 hover:text-pink-400 transition-all cursor-pointer group"
+          >
+            <Upload className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span className="text-[10px] font-black uppercase tracking-widest">{t.uploadFont || "Upload Font"}</span>
+          </label>
+        </div>
+      </section>
+
       {/* Asset Management */}
       <section>
         <div className="flex items-center gap-2 mb-4">
@@ -520,7 +588,7 @@ const ControlPanel: React.FC<ControlPanelProps> = memo(({
                   onChange={(e) => onUpdateIntroTypography({ fontFamily: e.target.value })}
                   className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-600 transition-colors appearance-none cursor-pointer"
                 >
-                  {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
+                  {fontOptions.map(f => <option key={f} value={f}>{f}</option>)}
                 </select>
               </div>
               <div className="flex flex-col gap-1.5">
@@ -590,7 +658,7 @@ const ControlPanel: React.FC<ControlPanelProps> = memo(({
                 onChange={(e) => onUpdateTypography({ fontFamily: e.target.value })}
                 className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-600 transition-colors appearance-none cursor-pointer"
               >
-                {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
+                {fontOptions.map(f => <option key={f} value={f}>{f}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
